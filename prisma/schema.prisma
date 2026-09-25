@@ -1,0 +1,145 @@
+generator client {
+  provider = "prisma-client"
+  output = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id String @id @default(dbgenerated("(gen_random_uuid())::text"))
+  name String
+  email String @unique
+  emailVerified Boolean @default(false)
+  image String?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  sessions Session[]
+  accounts Account[]
+  memberships OrganizationMember[]
+}
+
+model Session {
+  id String @id @default(dbgenerated("(gen_random_uuid())::text"))
+  token String @unique
+  expiresAt DateTime @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  ipAddress String?
+  userAgent String?
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
+}
+
+model Account {
+  id String @id @default(dbgenerated("(gen_random_uuid())::text"))
+  accountId String
+  providerId String
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken String?
+  refreshToken String?
+  idToken String?
+  accessTokenExpiresAt DateTime? @db.Timestamptz(3)
+  refreshTokenExpiresAt DateTime? @db.Timestamptz(3)
+  scope String?
+  password String?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  @@unique([providerId, accountId])
+  @@index([userId])
+}
+
+model Verification {
+  id String @id @default(dbgenerated("(gen_random_uuid())::text"))
+  identifier String
+  value String
+  expiresAt DateTime @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  @@index([identifier])
+}
+
+model RateLimit {
+  id String @id @default(dbgenerated("(gen_random_uuid())::text"))
+  key String @unique
+  count Int
+  lastRequest BigInt
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+model Organization {
+  id String @id @default(uuid()) @db.Uuid
+  name String
+  slug String @unique
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  members OrganizationMember[]
+  properties Property[]
+}
+
+model OrganizationMember {
+  organizationId String @db.Uuid
+  userId String
+  role Role @default(MEMBER)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@id([organizationId, userId])
+  @@index([userId])
+}
+
+enum PropertyStatus {
+  DRAFT
+  PROCESSING
+  READY
+  PUBLISHED
+  ARCHIVED
+}
+
+enum PropertyType {
+  APARTMENT
+  HOUSE
+  COMMERCIAL
+  LAND
+}
+
+enum Purpose {
+  SALE
+  RENT
+}
+
+model Property {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  title String @db.VarChar(160)
+  slug String @unique
+  description String @default("") @db.VarChar(5000)
+  type PropertyType @default(APARTMENT)
+  purpose Purpose @default(SALE)
+  neighborhood String @default("") @db.VarChar(120)
+  city String @default("") @db.VarChar(120)
+  state String @default("") @db.VarChar(2)
+  priceCents BigInt @default(0)
+  area Int @default(0)
+  bedrooms Int @default(0)
+  bathrooms Int @default(0)
+  parkingSpaces Int @default(0)
+  status PropertyStatus @default(DRAFT)
+  cover String?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  publishedAt DateTime? @db.Timestamptz(3)
+  archivedAt DateTime? @db.Timestamptz(3)
+  @@index([organizationId, status, createdAt])
+  @@unique([id, organizationId])
+}

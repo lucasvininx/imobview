@@ -1,0 +1,56 @@
+import { z } from "zod";
+export const propertySchema = z.object({
+  title: z.string().trim().min(5, "Use pelo menos 5 caracteres.").max(160),
+  description: z.string().trim().max(5000),
+  type: z.enum(["APARTMENT", "HOUSE", "COMMERCIAL", "LAND"]),
+  purpose: z.enum(["SALE", "RENT"]),
+  neighborhood: z.string().trim().max(120),
+  city: z.string().trim().min(2, "Informe a cidade.").max(120),
+  state: z.enum([
+    "AC",
+    "AL",
+    "AP",
+    "AM",
+    "BA",
+    "CE",
+    "DF",
+    "ES",
+    "GO",
+    "MA",
+    "MT",
+    "MS",
+    "MG",
+    "PA",
+    "PB",
+    "PR",
+    "PE",
+    "PI",
+    "RJ",
+    "RN",
+    "RS",
+    "RO",
+    "RR",
+    "SC",
+    "SP",
+    "SE",
+    "TO",
+  ]),
+  price: z
+    .string()
+    .regex(
+      /^\d{1,12}(,\d{1,2})?$/,
+      "Use números e vírgula, sem pontos. Ex.: 950000,00",
+    ),
+  area: z.number().int().min(0).max(10000000),
+  bedrooms: z.number().int().min(0).max(100),
+  bathrooms: z.number().int().min(0).max(100),
+  parkingSpaces: z.number().int().min(0).max(100),
+});
+export type PropertyInput = z.infer<typeof propertySchema>;
+export const statusLabels = {
+  DRAFT: "Rascunho",
+  PROCESSING: "Processando",
+  READY: "Pronto",
+  PUBLISHED: "Publicado",
+  ARCHIVED: "Arquivado",
+} as const;
