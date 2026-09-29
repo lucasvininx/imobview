@@ -8,6 +8,11 @@ import { PropertyForm } from "@/features/properties/property-form";
 import { StatusActions } from "@/features/properties/status-actions";
 import { propertySchema, statusLabels } from "@/features/properties/schema";
 import { money } from "@/lib/format";
+import { listTours } from "@/features/tours/service";
+import { CreateTourButton } from "@/features/tours/create-button";
+import "@/features/tours/tour.css";
+import { listPhotos } from "@/features/media/service";
+import { PhotoManager } from "@/features/media/photo-manager";
 export default async function Page({
   params,
   searchParams,
@@ -23,6 +28,8 @@ export default async function Page({
     throw error;
   });
   const price = property.priceCents;
+  const tours = await listTours(actor, id);
+  const photos = await listPhotos(actor, id);
   const initial = {
     title: property.title,
     description: property.description,
@@ -71,6 +78,39 @@ export default async function Page({
       {can(membership.role, "property:publish") && (
         <StatusActions id={id} status={property.status} />
       )}
+      <section aria-labelledby="property-tours" className="tour-panel">
+        <h2 id="property-tours">Tours 360°</h2>
+        <p>
+          Envie panoramas, conecte os ambientes e publique uma visita
+          interativa.
+        </p>
+        {tours.map((tour) => (
+          <article className="tour-card" key={tour.id}>
+            <div>
+              <h3>{tour.title}</h3>
+              <p>{tour.status === "PUBLISHED" ? "Publicado" : "Rascunho"}</p>
+            </div>
+            <ButtonLink
+              href={`/app/imoveis/${id}/tours/${tour.id}`}
+              variant="secondary"
+            >
+              Abrir tour
+            </ButtonLink>
+          </article>
+        ))}
+        {!tours.length && <p>Este imóvel ainda não possui um tour.</p>}
+        {property.status !== "ARCHIVED" &&
+          can(membership.role, "property:create") &&
+          tours.length < 10 && <CreateTourButton propertyId={id} />}
+      </section>
+      <PhotoManager
+        propertyId={id}
+        photos={photos}
+        canEdit={
+          can(membership.role, "property:update") &&
+          property.status !== "ARCHIVED"
+        }
+      />
     </>
   );
 }

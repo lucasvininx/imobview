@@ -1,28 +1,39 @@
 import { PublicPresentation } from "@/components/public-presentation";
+import { getPublicProperty } from "@/features/properties/public-service";
+import { publicTours } from "@/features/tours/presentation";
+import { SiteHeader } from "@/components/site-header";
+import { SiteFooter } from "@/components/site-footer";
+import { ButtonLink } from "@/components/ui";
+
+export const dynamic = "force-dynamic";
 export const metadata = {
-  title: "Explore uma nova perspectiva",
-  description: "Conheça uma apresentação demonstrativa de imóvel no ImobView°.",
+  title: "Experimente um tour 360°",
+  description:
+    "Explore ambientes conectados em uma demonstração real do ImobView°.",
 };
-export default function Demo() {
+export default async function Demo() {
+  const slug = process.env.DEMO_PROPERTY_SLUG || "casa-modelo-tour-360";
+  const property = await getPublicProperty(slug);
+  if (property)
+    return (
+      <PublicPresentation
+        demo
+        property={property}
+        tours={await publicTours(slug)}
+      />
+    );
   return (
-    <PublicPresentation
-      demo
-      property={{
-        title: "Apartamento Jardim",
-        slug: "demonstracao",
-        description:
-          "Ambientes que se conectam, luz natural em cada detalhe e espaço para viver no seu ritmo. Conheça uma nova forma de apresentar um imóvel.\n\nEsta é uma experiência demonstrativa com informações fictícias e imagens ilustrativas. Não representa um imóvel à venda.",
-        city: "São Paulo",
-        state: "SP",
-        neighborhood: "Jardins",
-        priceCents: BigInt(98000000),
-        area: 145,
-        bedrooms: 3,
-        bathrooms: 3,
-        parkingSpaces: 2,
-        cover: "/images/living.jpg",
-        organizationName: "Imobiliária Demo",
-      }}
-    />
+    <>
+      <SiteHeader />
+      <main id="conteudo" className="container legal-page">
+        <h1>Conheça o tour 360°</h1>
+        <p>
+          A demonstração está sendo preparada. Entre em contato para conhecer o
+          produto em uma apresentação acompanhada.
+        </p>
+        <ButtonLink href="/contato">Agendar demonstração</ButtonLink>
+      </main>
+      <SiteFooter />
+    </>
   );
 }

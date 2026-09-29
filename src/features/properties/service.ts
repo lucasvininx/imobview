@@ -5,6 +5,7 @@ import { withTenant, type Actor } from "@/server/tenant";
 import { propertySchema } from "./schema";
 import { toCents } from "@/lib/format";
 import { DomainError } from "@/domain/errors";
+import { organizationUsage } from "@/domain/entitlements";
 
 export function getPropertyStats(actor: Actor) {
   return withTenant(actor, "property:read", async (tx) => {
@@ -77,6 +78,12 @@ export function saveProperty(actor: Actor, input: unknown, id?: string) {
         });
       }
       const newId = randomUUID();
+      const usage = await organizationUsage(tx, actor.organizationId);
+      if (usage.properties >= usage.organization.maxProperties)
+        throw new DomainError(
+          "CONFLICT",
+          "Limite de imóveis ativos atingido. Arquive um imóvel ou solicite ajuste do plano.",
+        );
       const slug = `${data.title
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")

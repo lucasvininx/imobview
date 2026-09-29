@@ -4,3 +4,8 @@ GRANT USAGE ON SCHEMA public TO imobview_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON "User", "Session", "Account", "Verification", "RateLimit", "Organization", "OrganizationMember" TO imobview_app;
 GRANT SELECT, INSERT, UPDATE ON "Property" TO imobview_app;
 GRANT EXECUTE ON FUNCTION public.get_published_property(text) TO imobview_app;
+GRANT SELECT, INSERT, UPDATE ON "Tour", "PanoramaAsset" TO imobview_app;
+GRANT EXECUTE ON FUNCTION public.get_published_tours(text) TO imobview_app;
+GRANT DELETE ON "PanoramaAsset" TO imobview_app;
+GRANT SELECT,INSERT,UPDATE,DELETE ON "PropertyPhoto" TO imobview_app;
+GRANT EXECUTE ON FUNCTION public.get_property_presentation(text) TO imobview_app;

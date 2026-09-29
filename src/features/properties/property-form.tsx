@@ -1,6 +1,7 @@
 "use client";
+import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm, type FieldPath } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
@@ -56,15 +57,7 @@ export function PropertyForm({
     resolver: zodResolver(propertySchema),
     defaultValues: initial,
   });
-  useEffect(() => {
-    const prevent = (event: BeforeUnloadEvent) => {
-      if (isDirty && !saved) {
-        event.preventDefault();
-      }
-    };
-    window.addEventListener("beforeunload", prevent);
-    return () => window.removeEventListener("beforeunload", prevent);
-  }, [isDirty, saved]);
+  useUnsavedChanges(isDirty);
   const submit = handleSubmit(async (data) => {
     setError("");
     try {

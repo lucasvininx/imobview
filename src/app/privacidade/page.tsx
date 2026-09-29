@@ -1,7 +1,9 @@
+import { businessContact } from "@/config/business";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 export const metadata = { title: "Privacidade" };
 export default function Page() {
+  const business = businessContact();
   return (
     <>
       <SiteHeader />
@@ -33,6 +35,26 @@ export default function Page() {
           publicados antes do cadastro de clientes reais. Esta página descreve o
           funcionamento atual e não substitui essa revisão.
         </p>
+        <h2>Responsável e atendimento</h2>
+        {business.name && (
+          <p>
+            {business.name}
+            {business.registration ? ` · ${business.registration}` : ""}
+          </p>
+        )}
+        {business.email ? (
+          <p>
+            Para suporte, acesso, exportação ou exclusão dos seus dados, entre
+            em contato pelo{" "}
+            <a href={`mailto:${business.email}`}>{business.email}</a>. A equipe
+            confirma a identidade e a autorização antes de atender solicitações.
+          </p>
+        ) : (
+          <p>
+            O responsável deve configurar a identificação e o canal de
+            atendimento antes da abertura comercial.
+          </p>
+        )}
       </main>
       <SiteFooter />
     </>

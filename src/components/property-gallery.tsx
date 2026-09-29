@@ -13,6 +13,10 @@ export function PropertyGallery({
     <div className="public-gallery">
       <Image
         src={images[active]}
+        unoptimized={
+          images[active].startsWith("https://") ||
+          images[active].startsWith("http://")
+        }
         alt={`${title} — ambiente ${active + 1}`}
         fill
         priority

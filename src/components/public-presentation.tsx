@@ -6,36 +6,53 @@ import { PropertyGallery } from "./property-gallery";
 import { ShareButton } from "./share-button";
 import { money } from "@/lib/format";
 import type { PublicProperty } from "@/features/properties/public-service";
+import { TourViewer } from "@/features/tours/viewer";
+import { whatsappUrl } from "@/features/organizations/schema";
+import type { TourSceneView } from "@/features/tours/viewer-types";
 export function PublicPresentation({
   property,
   demo = false,
+  tours = [],
 }: {
   property: PublicProperty;
   demo?: boolean;
+  tours?: {
+    id: string;
+    title: string;
+    initialSceneId: string | null;
+    scenes: TourSceneView[];
+  }[];
 }) {
+  const contact = whatsappUrl(
+    property.whatsapp,
+    `Olá! Tenho interesse no imóvel ${property.title}.`,
+  );
+  const images = property.photos.length
+    ? property.photos
+    : property.cover
+      ? [property.cover]
+      : [];
   return (
     <>
       <SiteHeader />
       <main id="conteudo" className="container public-property">
+        {tours.map((tour) => (
+          <section key={tour.id} aria-label={tour.title}>
+            <h2>{tour.title}</h2>
+            <TourViewer
+              scenes={tour.scenes}
+              initialSceneId={tour.initialSceneId}
+            />
+          </section>
+        ))}
         {demo && (
           <p className="notice">
             Apresentação demonstrativa · Imóvel fictício. Explore os ambientes
             pelas fotos. Vídeo e navegação 360° fazem parte das próximas etapas.
           </p>
         )}
-        {property.cover && (
-          <PropertyGallery
-            images={
-              demo
-                ? [
-                    property.cover,
-                    "/images/interior.jpg",
-                    "/images/residencia.jpg",
-                  ]
-                : [property.cover]
-            }
-            title={property.title}
-          />
+        {images.length > 0 && (
+          <PropertyGallery images={images} title={property.title} />
         )}
         <div className="public-property-info">
           <div>
@@ -73,10 +90,32 @@ export function PublicPresentation({
             {demo ? (
               <ButtonLink href="/contato">Conhecer o ImobView ↗</ButtonLink>
             ) : (
-              <p>
-                Consulte a imobiliária que compartilhou este imóvel para mais
-                informações.
-              </p>
+              <div>
+                {contact && (
+                  <a
+                    className="button button-primary"
+                    href={contact}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Conversar no WhatsApp ↗
+                  </a>
+                )}
+                {property.contactEmail && (
+                  <a
+                    className="button button-secondary"
+                    href={`mailto:${property.contactEmail}?subject=${encodeURIComponent(property.title)}`}
+                  >
+                    Enviar e-mail
+                  </a>
+                )}
+                {!contact && !property.contactEmail && (
+                  <p>
+                    Consulte a imobili?ria que compartilhou este imóvel para
+                    mais informa??es.
+                  </p>
+                )}
+              </div>
             )}
             <p style={{ fontSize: 10 }}>Uma apresentação ImobView°</p>
           </aside>

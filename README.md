@@ -12,7 +12,10 @@ Plataforma brasileira para organizar e apresentar imóveis. Este é o código-ba
 - PostgreSQL com constraints, índices, migrations e RLS; runtime com role sem privilégios administrativos.
 - Testes unitários, integração com PostgreSQL real e E2E com Chromium; workflow de CI.
 
-Vídeos, tours 360°, upload, analytics, convites, cobrança, autosave e onboarding comercial ainda não estão implementados. A interface identifica funcionalidades futuras. A página de contato é informativa; não há formulário que finja enviar mensagens.
+- Editor de tours 360° por imóvel: panoramas 2:1, ambientes, pontos clicáveis, visualizador WebGL, rascunhos e publicação independente.
+- Upload direto para bucket privado do Supabase, validação real dos pixels, remoção de metadados e URLs temporárias. Exige conexão ao projeto e configuração do Storage; não existe upload fictício na aplicação.
+
+Vídeos, analytics, convites, cobrança, autosave e onboarding comercial ainda não estão implementados. A página de contato é informativa; não há formulário que finja enviar mensagens.
 
 ## Stack e requisitos
 
@@ -78,7 +81,27 @@ Para testar recuperação fora do E2E, inicie `docker compose up -d mailpit` ou 
 | SMTP_HOST, SMTP_PORT, SMTP_FROM | Transporte de recuperação de senha                 |
 | SMTP_USER, SMTP_PASSWORD        | Credenciais de SMTP quando necessárias             |
 
-O schema de env falha no boot se variáveis obrigatórias estiverem ausentes; mensagens identificam nomes, sem expor valores. Somente NEXT_PUBLIC_APP_URL pode ser pública.
+O schema de env falha no boot se variáveis obrigatórias estiverem ausentes; mensagens identificam nomes, sem expor valores. Variáveis NEXT_PUBLIC são públicas; nenhuma chave secreta pode usar esse prefixo.
+
+## Tours 360° e Supabase
+
+Em **Imóveis → abrir imóvel → Criar tour 360°**, envie panoramas equiretangulares reais (JPEG/PNG/WebP estático, proporção 2:1, largura 1024–8192, até 20 MB). Adicione cada panorama como ambiente. Inicie a prévia, clique na posição desejada e escolha o ambiente de destino para criar um ponto. Salve o rascunho e publique. Todos os ambientes precisam estar conectados a partir do inicial; as conexões são direcionais. O imóvel também precisa estar publicado para o tour aparecer em `/v/slug`.
+
+Configure `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SECRET_KEY` (somente servidor) e `SUPABASE_TOUR_BUCKET` no `.env`. Após conferir o projeto, execute `npm run supabase:storage`: cria ou configura o bucket privado com limite de tamanho e MIME types. Nunca use bucket público. Limites iniciais: 10 tours/imóvel, 30 ambientes/tour e 40 uploads/tour. Não representam planos comerciais definitivos.
+
+O banco pode usar PostgreSQL do Supabase via Prisma: provisione `imobview_app` com LOGIN/NOSUPERUSER/NOBYPASSRLS, sem herança do owner, configure `DATABASE_URL` com essa role e `DIRECT_DATABASE_URL` com a role de migrations, aplique `npm run db:migrate` e `scripts/database-grants.sql`. Utilize as strings de conexão/TLS disponibilizadas no seu projeto e valide RLS antes de abrir acesso externo. Não execute `db:setup` nem seed de demonstração no Supabase remoto. A migration de hardening bloqueia os papéis `anon`/`authenticated` nos dados internos.
+
+A autenticação existente continua em Better Auth; as contas e sessões são persistidas no PostgreSQL do Supabase. Não houve migração de identidades para Supabase Auth. Consulte [a decisão dos tours](docs/adr/0002-tours.md).
+
+### Ambiente conectado em 29/09/2026
+
+O `.env` local foi conectado ao projeto **imobview**, referência `igdlejzstlajlvdvwipa`, em São Paulo. As oito migrations foram aplicadas e verificadas pelo Prisma; usuários, organizações, imóveis e tours locais foram preservados. O banco usa conexões distintas para runtime (`imobview_app`) e migrations (`imobview_migrator`), sem SUPERUSER/BYPASSRLS. Todas as tabelas internas possuem RLS. O bucket `imobview-tours` é privado, com limite de 20 MB.
+
+A conexão usa o pooler em modo sessão, porta 5432, com `sslmode=verify-full` e o certificado oficial indicado por `sslrootcert`. O certificado está em `.local/supabase-ca.crt`; ao mover ou publicar a aplicação, provisione esse arquivo e ajuste o caminho na URL. Não desative a verificação TLS. [Conexões e TLS no Supabase](https://supabase.com/docs/guides/database/connecting-to-postgres).
+
+Foi verificado no projeto real: upload assinado por HTTP, validação e normalização do panorama, publicação, download assinado, bloqueio de leitura pública direta, isolamento entre organizações, retirada da publicação e login pelo navegador. Os registros e arquivos temporários de verificação foram removidos. A configuração anterior foi preservada em `.local/env-before-supabase.env`, ignorado pelo Git.
+
+Os testes continuam no PostgreSQL local: `TEST_DATABASE_URL` e `TEST_DIRECT_DATABASE_URL` não devem apontar para o Supabase. Não execute `db:setup` com a configuração remota ativa; esse comando é exclusivo da fundação local. Para concessões administrativas específicas da plataforma, veja `scripts/supabase-platform-grants.sql`. A ausência de política em `_prisma_migrations` é intencional: somente o owner deve acessar o histórico.
 
 ## Banco e migrations
 
@@ -118,7 +141,7 @@ CI: `.github/workflows/ci.yml`, com PostgreSQL real e as mesmas etapas. O workfl
 ```text
 src/app/           rotas, layouts, metadata
 src/components/    marca, UI e composição compartilhada
-src/features/      auth, organizations, properties
+src/features/      auth, organizations, properties, tours
 src/domain/        permissões e erros
 src/server/        sessão, tenant, Prisma e logging
 src/config/        validação de ambiente

@@ -1,12 +1,15 @@
 import { test, expect } from "@playwright/test";
 import { Pool } from "pg";
 import { SMTPServer } from "smtp-server";
+import { testAdminUrl } from "../database-url";
 const password = process.env.SEED_PASSWORD!;
-const adminUrl = new URL(process.env.DIRECT_DATABASE_URL!);
-adminUrl.pathname = new URL(process.env.TEST_DATABASE_URL!).pathname;
-const pool = new Pool({ connectionString: adminUrl.toString() });
-test("unsaved-change protection re-arms after saving an edit", async ({ page }) => {
-  const result = await pool.query('SELECT id FROM "Property" WHERE slug=$1', ["apartamento-jardim-demo"]);
+const pool = new Pool({ connectionString: testAdminUrl() });
+test("unsaved-change protection re-arms after saving an edit", async ({
+  page,
+}) => {
+  const result = await pool.query('SELECT id FROM "Property" WHERE slug=$1', [
+    "apartamento-jardim-demo",
+  ]);
   await page.goto("/login");
   await page.getByLabel("E-mail", { exact: true }).fill("admin@imobview.test");
   await page.getByLabel("Senha", { exact: true }).fill(password);
@@ -15,18 +18,26 @@ test("unsaved-change protection re-arms after saving an edit", async ({ page }) 
   await page.goto("/app/imoveis/" + result.rows[0].id);
   await page.getByRole("button", { name: "Continuar", exact: true }).click();
   await page.getByRole("button", { name: "Continuar", exact: true }).click();
-  await page.getByRole("button", { name: "Salvar imóvel", exact: true }).click();
-  await expect(page.getByRole("status")).toContainText("Imóvel salvo com sucesso");
+  await page
+    .getByRole("button", { name: "Salvar imóvel", exact: true })
+    .click();
+  await expect(page.getByRole("status")).toContainText(
+    "Imóvel salvo com sucesso",
+  );
   await page.getByRole("button", { name: "Voltar", exact: true }).click();
   await page.getByRole("button", { name: "Voltar", exact: true }).click();
-  await page.getByLabel("Título do imóvel").fill("Alteração que ainda não foi salva");
+  await page
+    .getByLabel("Título do imóvel")
+    .fill("Alteração que ainda não foi salva");
   const dialogPromise = page.waitForEvent("dialog", { timeout: 5000 });
-  const reload = page.reload().catch(() => null);
+  const reload = page.reload({ timeout: 2000 }).catch(() => null);
   const dialog = await dialogPromise;
   expect(dialog.type()).toBe("beforeunload");
   await dialog.dismiss();
   await reload;
-  await expect(page.getByLabel("Título do imóvel")).toHaveValue("Alteração que ainda não foi salva");
+  await expect(page.getByLabel("Título do imóvel")).toHaveValue(
+    "Alteração que ainda não foi salva",
+  );
 });
 test.afterAll(async () => pool.end());
 test.beforeEach(async () => {
@@ -56,14 +67,12 @@ test("public site and gallery work at desktop and mobile sizes", async ({
     });
   }
   await page.goto("/demonstracao");
-  await page.getByRole("button", { name: "Ambiente 2" }).click();
   await expect(
-    page.getByRole("button", { name: "Ambiente 2" }),
-  ).toHaveAttribute("aria-pressed", "true");
-  await page.screenshot({
-    path: "test-results/demo-mobile.png",
-    fullPage: true,
-  });
+    page.getByRole("heading", { name: "Conheça o tour 360°" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Agendar demonstração" }),
+  ).toBeVisible();
   expect(errors).toEqual([]);
 });
 test("protected routes reject anonymous users and invalid credentials", async ({
@@ -240,6 +249,8 @@ test("authentication rejects hostile origins and throttles repeated attempts", a
     data: { email: "admin@imobview.test", password },
   });
   expect(csrf.status()).toBe(403);
+  // The rejected origin also consumes an attempt; measure the quota independently.
+  await pool.query('DELETE FROM "RateLimit"');
   for (let index = 0; index < 6; index++) {
     const response = await request.post("/api/auth/sign-in/email", {
       data: { email: "admin@imobview.test", password: "invalid-password" },

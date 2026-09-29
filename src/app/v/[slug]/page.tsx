@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getPublicProperty } from "@/features/properties/public-service";
 import { PublicPresentation } from "@/components/public-presentation";
+import { publicTours } from "@/features/tours/presentation";
 const getProperty = cache(getPublicProperty);
 export const dynamic = "force-dynamic";
 export async function generateMetadata({
@@ -25,9 +26,7 @@ export async function generateMetadata({
       title: property.title,
       description: property.description.slice(0, 160),
       url: `/v/${property.slug}`,
-      images: property.cover
-        ? [property.cover]
-        : ["/brand/imobview-original.png"],
+      images: [`/v/${property.slug}/capa`],
     },
   };
 }
@@ -39,5 +38,6 @@ export default async function Page({
   const { slug } = await params;
   const property = await getProperty(slug);
   if (!property) notFound();
-  return <PublicPresentation property={property} />;
+  const tours = await publicTours(slug);
+  return <PublicPresentation property={property} tours={tours} />;
 }

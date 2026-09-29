@@ -80,10 +80,16 @@ model Organization {
   id String @id @default(uuid()) @db.Uuid
   name String
   slug String @unique
+  contactEmail String @default("") @db.VarChar(254)
+  whatsapp String @default("") @db.VarChar(15)
+  maxProperties Int @default(30)
+  maxStorageBytes BigInt @default(2147483648)
+  maxPanoramas Int @default(300)
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
   members OrganizationMember[]
   properties Property[]
+  tours Tour[]
 }
 
 model OrganizationMember {
@@ -140,6 +146,72 @@ model Property {
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
   publishedAt DateTime? @db.Timestamptz(3)
   archivedAt DateTime? @db.Timestamptz(3)
+  tours Tour[]
+  photos PropertyPhoto[]
   @@index([organizationId, status, createdAt])
   @@unique([id, organizationId])
+}
+
+model PropertyPhoto {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  propertyId String @db.Uuid
+  property Property @relation(fields: [propertyId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  storageKey String @unique
+  uploadKey String @unique
+  fileName String @db.VarChar(160)
+  size Int
+  status AssetStatus @default(PENDING)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  @@index([organizationId, propertyId, status])
+}
+
+enum TourStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model Tour {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  propertyId String @db.Uuid
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  title String @db.VarChar(120)
+  status TourStatus @default(DRAFT)
+  version Int @default(1)
+  draft Json @default("{\"scenes\":[],\"initialSceneId\":null}")
+  published Json?
+  publishedAt DateTime? @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  assets PanoramaAsset[]
+  @@unique([id, organizationId])
+  @@index([organizationId, propertyId, createdAt])
+}
+
+enum AssetStatus {
+  PENDING
+  READY
+  FAILED
+}
+
+model PanoramaAsset {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  tourId String @db.Uuid
+  tour Tour @relation(fields: [tourId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  storageKey String @unique
+  uploadKey String @unique
+  fileName String @db.VarChar(160)
+  mimeType String
+  size Int
+  width Int?
+  height Int?
+  status AssetStatus @default(PENDING)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  @@index([organizationId, tourId, status])
 }
