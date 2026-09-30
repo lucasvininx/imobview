@@ -13,6 +13,7 @@ import { CreateTourButton } from "@/features/tours/create-button";
 import "@/features/tours/tour.css";
 import { listPhotos } from "@/features/media/service";
 import { PhotoManager } from "@/features/media/photo-manager";
+export const maxDuration = 120;
 export default async function Page({
   params,
   searchParams,

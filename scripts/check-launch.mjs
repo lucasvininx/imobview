@@ -91,6 +91,7 @@ try {
   check(
     !error &&
       data?.public === false &&
+      Number(data.file_size_limit) > 0 &&
       Number(data.file_size_limit) <= 20971520,
     "Storage privado com limite de upload",
   );

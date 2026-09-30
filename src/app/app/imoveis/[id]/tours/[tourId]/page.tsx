@@ -8,6 +8,7 @@ import { PageHeader, ButtonLink } from "@/components/ui";
 import { can } from "@/domain/permissions";
 import { DomainError } from "@/domain/errors";
 import { signPanoramas, storageConfigured } from "@/server/supabase/storage";
+export const maxDuration = 120;
 export default async function Page({
   params,
 }: {

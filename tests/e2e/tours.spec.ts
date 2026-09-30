@@ -29,6 +29,10 @@ test("360 tour uploads, connects rooms, publishes and isolates drafts", async ({
     .click();
   await expect(page).toHaveURL(/\/tours\//);
   const editorUrl = page.url();
+  let documentLoads = 0;
+  page.on("load", () => {
+    documentLoads += 1;
+  });
   await expect(
     page.getByRole("heading", { name: "Como devem ser as fotos do tour?" }),
   ).toBeVisible();
@@ -55,6 +59,7 @@ test("360 tour uploads, connects rooms, publishes and isolates drafts", async ({
     .getByText("Ver exemplos, limites e como fotografar", { exact: true })
     .click();
   for (const [index, color] of ["#064E3B", "#94A3B8"].entries()) {
+    const loadsBeforeUpload = documentLoads;
     const buffer = await sharp({
       create: { width: 1024, height: 512, channels: 3, background: color },
     })
@@ -68,6 +73,10 @@ test("360 tour uploads, connects rooms, publishes and isolates drafts", async ({
     await expect(
       page.getByText(`panorama-${index}.jpg`, { exact: true }),
     ).toBeVisible({ timeout: 30000 });
+    expect(
+      documentLoads,
+      "upload should update the editor without a full document reload",
+    ).toBe(loadsBeforeUpload);
     await page
       .getByRole("button", { name: "Adicionar ambiente", exact: true })
       .last()

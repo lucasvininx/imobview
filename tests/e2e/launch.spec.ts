@@ -54,13 +54,13 @@ test("agency contact, photo upload and public gallery work on mobile", async ({
       })
         .jpeg()
         .toBuffer();
-      await page
-        .getByLabel("Adicionar foto")
-        .setInputFiles({
-          name: `casa-${index}.jpg`,
-          mimeType: "image/jpeg",
-          buffer,
-        });
+      await page.getByLabel("Adicionar foto").waitFor({ state: "visible" });
+      await expect(page.getByLabel("Adicionar foto")).toBeEnabled();
+      await page.getByLabel("Adicionar foto").setInputFiles({
+        name: `casa-${index}.jpg`,
+        mimeType: "image/jpeg",
+        buffer,
+      });
       await expect(
         page.getByRole("img", { name: `casa-${index}.jpg` }),
       ).toBeVisible();
@@ -212,9 +212,7 @@ test("assisted customer provisioning activates through email reset and opens its
       .fill("customer-e2e-password-123");
     await page.getByRole("button", { name: "Entrar na plataforma" }).click();
     await expect(page).toHaveURL(/\/app$/);
-    await expect(
-      page.getByText("Agência E2E", { exact: true }).first(),
-    ).toBeVisible();
+    await expect(page.getByRole("complementary")).toContainText("Agência E2E");
     await page.goto("/app/imoveis");
     await expect(
       page.getByText("Apartamento Jardim", { exact: false }),

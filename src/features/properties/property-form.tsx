@@ -234,8 +234,8 @@ export function PropertyForm({
             </dl>
             <p className="review-note">
               O cadastro será salvo como rascunho. A publicação é feita
-              separadamente, quando você estiver pronto. Fotos e tours entrarão
-              em uma próxima etapa.
+              separadamente, quando você estiver pronto. Depois de salvar,
+              adicione fotos e monte o tour 360° deste imóvel.
             </p>
           </>
         )}

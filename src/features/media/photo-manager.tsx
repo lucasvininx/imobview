@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useHydrated } from "@/hooks/use-hydrated";
 import Image from "next/image";
 import { Button } from "@/components/ui";
 import {
@@ -19,6 +20,7 @@ export function PhotoManager({
   canEdit: boolean;
 }) {
   const router = useRouter();
+  const hydrated = useHydrated();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -28,13 +30,13 @@ export function PhotoManager({
     setMessage("");
     try {
       await work();
-      router.refresh();
     } catch {
       setError(
         "A conexão falhou. Retome a validação se o envio já terminou ou descarte o envio e tente novamente.",
       );
     } finally {
       setPending(false);
+      router.refresh();
     }
   }
   return (
@@ -52,7 +54,7 @@ export function PhotoManager({
           <input
             type="file"
             accept="image/jpeg,image/png,image/webp"
-            disabled={pending}
+            disabled={pending || !hydrated}
             onChange={(event) => {
               const file = event.target.files?.[0];
               event.target.value = "";

@@ -95,7 +95,7 @@ A autenticação existente continua em Better Auth; as contas e sessões são pe
 
 ### Ambiente conectado em 29/09/2026
 
-O `.env` local foi conectado ao projeto **imobview**, referência `igdlejzstlajlvdvwipa`, em São Paulo. As oito migrations foram aplicadas e verificadas pelo Prisma; usuários, organizações, imóveis e tours locais foram preservados. O banco usa conexões distintas para runtime (`imobview_app`) e migrations (`imobview_migrator`), sem SUPERUSER/BYPASSRLS. Todas as tabelas internas possuem RLS. O bucket `imobview-tours` é privado, com limite de 20 MB.
+O `.env` local foi conectado ao projeto **imobview**, referência `igdlejzstlajlvdvwipa`, em São Paulo. As nove migrations foram aplicadas e verificadas pelo Prisma; usuários, organizações, imóveis e tours locais foram preservados. O banco usa conexões distintas para runtime (`imobview_app`) e migrations (`imobview_migrator`), sem SUPERUSER/BYPASSRLS. Todas as tabelas internas possuem RLS. O bucket `imobview-tours` é privado, com limite de 20 MB.
 
 A conexão usa o pooler em modo sessão, porta 5432, com `sslmode=verify-full` e o certificado oficial indicado por `sslrootcert`. O certificado está em `.local/supabase-ca.crt`; ao mover ou publicar a aplicação, provisione esse arquivo e ajuste o caminho na URL. Não desative a verificação TLS. [Conexões e TLS no Supabase](https://supabase.com/docs/guides/database/connecting-to-postgres).
 
@@ -141,7 +141,7 @@ CI: `.github/workflows/ci.yml`, com PostgreSQL real e as mesmas etapas. O workfl
 ```text
 src/app/           rotas, layouts, metadata
 src/components/    marca, UI e composição compartilhada
-src/features/      auth, organizations, properties, tours
+src/features/      auth, organizations, properties, tours, media
 src/domain/        permissões e erros
 src/server/        sessão, tenant, Prisma e logging
 src/config/        validação de ambiente
@@ -155,8 +155,22 @@ docs/adr/          decisões arquiteturais
 - [Logo, paleta e imagens](docs/brand.md)
 - [Operação e pendências de produção](docs/operations.md)
 
-## Antes da abertura comercial
+## Beta e preparação para lançamento
 
-Configurar domínio, banco gerenciado com backup/restore, SMTP autorizado e HTTPS; revisar privacidade/termos e identificar controlador/canal de titulares; definir planos/limites; implementar onboarding e confirmação de e-mail. Não há deploy realizado, serviço contratado ou garantia de readiness comercial implícita nesta entrega.
+Contato comercial por organização, galeria de fotos, limites configuráveis, recuperação local de rascunho e criação assistida de contas estão implementados. A demonstração utiliza o tour publicado no Supabase. A publicação da aplicação será feita por Lucas.
 
-As páginas públicas não incluem endereços privados. Nenhum evento de analytics ou lead é coletado. Não publicar dados reais enquanto os requisitos operacionais e comerciais não estiverem resolvidos.
+- [Lista de lançamento e dependências externas](docs/lancamento.md)
+- [Operação: contas, limites, backups, limpeza e monitoramento](docs/operations.md)
+- [Como fotografar e enviar panoramas 360°](docs/fotos-360.md)
+
+```bash
+npm run customer:create -- .local/cliente.json
+npm run launch:check
+npm run ops:backup
+npm run ops:cleanup
+npm run ops:monitor
+```
+
+Os comandos administrativos usam simulação quando indicado; consulte o manual antes de `--apply`. A criação de contas não envia mensagens: o titular define a senha pelo fluxo de recuperação. Backups são cifrados, dependem de ferramentas PostgreSQL e devem ser replicados fora deste computador com chave guardada separadamente.
+
+Antes de abrir para clientes reais faltam dados comerciais, SMTP real, revisão dos termos/privacidade, conta real de proprietário, destino externo de backup/alertas e validação no host publicado. `launch:check` lista essas dependências sem imprimir segredos. Nenhuma cobrança automática ou deploy está implícito nesta entrega.

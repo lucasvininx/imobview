@@ -5,9 +5,9 @@ import {
   ArrowUpRight,
   Play,
   Scan,
-  Video,
+  Images,
   Link2,
-  ChartNoAxesCombined,
+  Building2,
   Check,
   MousePointer2,
   Maximize,
@@ -18,11 +18,11 @@ import { SiteFooter } from "@/components/site-footer";
 import { ButtonLink } from "@/components/ui";
 const features = [
   {
-    icon: Video,
-    title: "Cada detalhe em movimento.",
+    icon: Images,
+    title: "Cada detalhe, bem apresentado.",
     description:
-      "Vídeos que revelam os ambientes, a luz e as possibilidades de um novo lar.",
-    tag: "VÍDEO IMOBILIÁRIO",
+      "Fotos organizadas em uma galeria que valoriza os ambientes e os detalhes do imóvel.",
+    tag: "GALERIA DE FOTOS",
   },
   {
     icon: Scan,
@@ -39,21 +39,21 @@ const features = [
     tag: "PÁGINA COMPARTILHÁVEL",
   },
   {
-    icon: ChartNoAxesCombined,
-    title: "Interesse que você enxerga.",
+    icon: Building2,
+    title: "Seu portfólio em um só lugar.",
     description:
-      "Entenda quais imóveis despertam atenção e transforme informação em oportunidade.",
-    tag: "MÉTRICAS DE INTERESSE",
+      "Organize os imóveis da sua imobiliária, prepare rascunhos e escolha o que publicar.",
+    tag: "GESTÃO DO PORTFÓLIO",
   },
 ];
 const faqs = [
   [
     "O que é o ImobView?",
-    "É uma plataforma para organizar e apresentar imóveis em páginas digitais, reunindo informações e, nas próximas etapas, vídeos e experiências imersivas.",
+    "É uma plataforma para organizar imóveis, enviar fotos e montar tours 360° com ambientes conectados em páginas compartilháveis.",
   ],
   [
     "Preciso de equipamentos especiais?",
-    "Para cadastrar um imóvel e montar sua apresentação, basta um navegador. A produção de vídeos e conteúdo 360° pode exigir equipamentos ou serviços especializados.",
+    "Para gerenciar imóveis, basta um navegador. Para o tour, envie panoramas equiretangulares 360° × 180°, em proporção 2:1, capturados com câmera 360° ou equipamento e software de costura adequados. Fotos comuns não substituem panoramas completos.",
   ],
   [
     "Posso compartilhar pelo WhatsApp?",
@@ -61,7 +61,7 @@ const faqs = [
   ],
   [
     "O ImobView já está disponível?",
-    "Estamos na fase inicial do produto. Você pode conhecer a demonstração agora. Planos, preços e disponibilidade comercial serão definidos antes do lançamento.",
+    "O beta tem entrada acompanhada e condições combinadas com cada imobiliária. Explore a demonstração e fale com a equipe. Não há cobrança automática nesta etapa.",
   ],
 ];
 export default function Home() {
@@ -95,7 +95,7 @@ export default function Home() {
               Faça seu cliente se imaginar dentro dele.
             </p>
             <p className="hero-small">
-              Vídeos, tours e experiências que aproximam
+              Fotos, tours e experiências que aproximam
               <br className="desktop-only" /> pessoas do seu próximo lugar.
             </p>
             <div className="hero-ctas">
@@ -136,7 +136,7 @@ export default function Home() {
               <strong>A experiência em primeiro lugar.</strong>
             </span>
             <div>
-              <Video size={19} /> Vídeos que envolvem
+              <Images size={19} /> Imagens que envolvem
             </div>
             <div>
               <Scan size={20} /> Espaços que surpreendem
@@ -312,37 +312,37 @@ export default function Home() {
             <p className="eyebrow">ESPAÇO PARA CRESCER COM VOCÊ</p>
             <h2>Uma nova fase para o seu negócio.</h2>
             <p>
-              Conheça as propostas de planos. Valores e limites serão definidos
-              no lançamento.
+              Escolha como começar. As condições e os limites do beta são
+              combinados com nossa equipe antes da contratação.
             </p>
           </div>
           <div className="plans">
             {[
               {
-                name: "Start",
+                name: "Conheça",
                 desc: "O primeiro passo para apresentar melhor.",
                 items: [
                   "Organização de imóveis",
-                  "Apresentação por vídeo",
+                  "Galeria de fotos",
                   "Páginas compartilháveis",
                 ],
               },
               {
-                name: "Pro",
+                name: "Beta 360°",
                 desc: "Mais formas de explorar cada espaço.",
                 items: [
-                  "Tudo da proposta Start",
+                  "Cadastro e apresentação de imóveis",
                   "Tours virtuais e conteúdo 360°",
-                  "Personalização e métricas",
+                  "Contato direto por WhatsApp",
                 ],
               },
               {
-                name: "Business",
+                name: "Seu portfólio",
                 desc: "Uma visão completa para sua imobiliária.",
                 items: [
-                  "Tudo da proposta Pro",
-                  "Equipes e múltiplos usuários",
-                  "Mais volume e possibilidades",
+                  "Todos os recursos do beta",
+                  "Entrada acompanhada pela equipe",
+                  "Limites acordados conforme o volume",
                 ],
               },
             ].map((plan, i) => (
@@ -351,12 +351,12 @@ export default function Home() {
                 key={plan.name}
               >
                 <p className="eyebrow">
-                  {i === 1 ? "EXPERIÊNCIA COMPLETA" : "PROPOSTA DE PLANO"}
+                  {i === 1 ? "TOURS CONECTADOS" : "ENTRADA ACOMPANHADA"}
                 </p>
                 <h3>{plan.name}</h3>
                 <p>{plan.desc}</p>
                 <div className="plan-price">
-                  Em breve <span>no lançamento</span>
+                  Sob consulta <span>condições do beta</span>
                 </div>
                 <ul>
                   {plan.items.map((item) => (

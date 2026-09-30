@@ -48,7 +48,8 @@ export function PublicPresentation({
         {demo && (
           <p className="notice">
             Apresentação demonstrativa · Imóvel fictício. Explore os ambientes
-            pelas fotos. Vídeo e navegação 360° fazem parte das próximas etapas.
+            no tour 360°. As imagens e informações não representam uma oferta de
+            venda.
           </p>
         )}
         {images.length > 0 && (

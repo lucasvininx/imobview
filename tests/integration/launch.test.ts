@@ -1,4 +1,4 @@
-import { beforeAll, afterAll, it, expect } from "vitest";
+import { beforeAll, afterAll, it, expect, vi } from "vitest";
 import { randomUUID } from "node:crypto";
 import { db } from "@/server/db";
 import { withTenant, type Actor } from "@/server/tenant";
@@ -13,6 +13,15 @@ import {
   createTour,
   publishTour,
 } from "@/features/tours/service";
+import { finalizePanorama } from "@/features/tours/service";
+vi.mock("@/server/supabase/storage", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/server/supabase/storage")>();
+  return {
+    ...actual,
+    removeTemporaryPanorama: vi.fn().mockResolvedValue(undefined),
+  };
+});
 
 const userId = randomUUID(),
   orgId = randomUUID(),
@@ -186,4 +195,36 @@ it("refuses deletion of draft or published panoramas and cross-tenant files", as
     code: "CONFLICT",
   });
   expect((await getTour(actor, tour.id)).assets).toHaveLength(1);
+});
+
+it("retains a discarded upload reservation until its signed URL has expired", async () => {
+  const property = await withTenant(actor, "property:read", (tx) =>
+    tx.property.findFirstOrThrow({ where: { organizationId: orgId } }),
+  );
+  const tour = await createTour(actor, property.id, "Reserva descartada");
+  const assetId = randomUUID();
+  await withTenant(actor, "property:update", (tx) =>
+    tx.panoramaAsset.create({
+      data: {
+        id: assetId,
+        organizationId: orgId,
+        tourId: tour.id,
+        storageKey: randomUUID(),
+        uploadKey: randomUUID(),
+        fileName: "pending.jpg",
+        size: 100,
+        mimeType: "image/jpeg",
+      },
+    }),
+  );
+  await removePanorama(actor, assetId);
+  const asset = await withTenant(actor, "property:read", (tx) =>
+    tx.panoramaAsset.findFirst({
+      where: { id: assetId, organizationId: orgId },
+    }),
+  );
+  expect(asset?.status).toBe("FAILED");
+  await expect(finalizePanorama(actor, assetId)).rejects.toMatchObject({
+    code: "CONFLICT",
+  });
 });

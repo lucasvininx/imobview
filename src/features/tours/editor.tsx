@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
 import { tourDocumentSchema } from "./schema";
 import { Button } from "@/components/ui";
@@ -37,6 +39,8 @@ export function TourEditor({
   canPublish: boolean;
   storageReady: boolean;
 }) {
+  const router = useRouter();
+  const hydrated = useHydrated();
   const [title, setTitle] = useState(initialTitle);
   const [doc, setDoc] = useState(initialDocument);
   const [version, setVersion] = useState(initialVersion);
@@ -192,9 +196,10 @@ export function TourEditor({
           setError(result.error);
           return;
         }
-        window.location.reload();
+        setMessage("Panorama validado. Adicione-o como ambiente abaixo.");
       } finally {
         setUploadProgress(null);
+        router.refresh();
       }
     });
   }
@@ -352,7 +357,7 @@ export function TourEditor({
                 <input
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
-                  disabled={pending || !storageReady}
+                  disabled={pending || !storageReady || !hydrated}
                   onChange={(event) => {
                     const file = event.target.files?.[0];
                     if (file) void upload(file);

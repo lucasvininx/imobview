@@ -17,7 +17,7 @@ export async function reportError(event: string, error: unknown) {
   if (!url?.startsWith("https://") || Date.now() - lastAlertAt < 60000) return;
   lastAlertAt = Date.now();
   try {
-    await fetch(url, {
+    const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -27,6 +27,7 @@ export async function reportError(event: string, error: unknown) {
       }),
       signal: AbortSignal.timeout(3000),
     });
+    if (!response.ok) throw new Error("AlertDeliveryError");
   } catch {
     logError("alert.delivery.failed", new Error("AlertDeliveryError"));
   }

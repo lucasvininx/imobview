@@ -100,8 +100,8 @@ export default async function Dashboard() {
         <EmptyState />
       )}
       <p className="muted" style={{ fontSize: 11, marginTop: 25 }}>
-        Vídeos, tours e métricas de interesse serão disponibilizados nas
-        próximas etapas.
+        Abra um imóvel para adicionar fotos, montar seu tour 360° e publicar a
+        apresentação. Vídeos e métricas de interesse estão no roadmap.
       </p>
     </>
   );

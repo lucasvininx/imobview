@@ -18,6 +18,10 @@ try {
         'DELETE FROM "Account" WHERE "userId"=ANY($1::text[])',
         [ids],
       );
+      await client.query(
+        "DELETE FROM \"Verification\" WHERE value=ANY($1::text[]) AND identifier LIKE 'reset-password:%'",
+        [ids],
+      );
       await client.query("COMMIT");
     } catch (error) {
       await client.query("ROLLBACK");

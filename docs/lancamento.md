@@ -41,3 +41,13 @@ Cobrança automática, planos públicos definitivos, equipes com convites, analy
 ## Limitações técnicas explícitas
 
 A normalização de imagens ocorre no servidor com limites de tamanho/pixels e transação de até 120 segundos. Não existe fila de processamento; é necessário medir memória e timeout no host publicado. URLs de leitura expiram em 15 minutos; recarregar a página renova o acesso se o conteúdo continuar publicado. Arquivos removidos deixam de ser assinados, mas uma URL já emitida pode funcionar até expirar. Envios recentes descartados mantêm uma reserva até a limpeza após 24 horas para impedir que uma URL de upload ainda válida recrie objetos sem rastreamento. A galeria do imóvel publicado é atualizada imediatamente; o tour continua usando snapshot de publicação.
+
+## Validação de 30/09/2026
+
+Panorama real de 8192 × 4096 px e 4,80 MB: normalização local em aproximadamente 225 ms, saída de 4,76 MB, pico RSS do processo em 321 MB. É uma medição local de arquivo único, sem rede, não um benchmark de concorrência ou garantia do host de produção.
+
+A verificação automatizada do ambiente confirma role restrita, bucket privado, demonstração publicada e chave de backup. Ainda sinaliza ausência de SMTP externo, identidade comercial, revisão dos documentos, conta real, desativação das contas demo e monitor externo. O endereço público será configurado na publicação por Lucas.
+
+Passaram: formatter, lint, typecheck, 23 testes unitários, 20 de integração, build e 13 E2E. O teste do tour ganhou uma regressão adicional para garantir que o upload atualize o editor sem recarregar a página inteira; falhou antes da correção e passou depois. A galeria também foi validada diretamente no Supabase real (upload, normalização, leitura pública, arquivamento e isolamento entre organizações); os registros de verificação foram removidos.
+
+As páginas de edição de imóvel e tour declaram `maxDuration=120` para as Server Actions. O host escolhido ainda precisa suportar esse limite e a memória necessária para processar panoramas grandes.
