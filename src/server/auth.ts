@@ -8,15 +8,20 @@ import { readEnv } from "@/config/env";
 import { logError } from "@/server/logger";
 
 const env = readEnv();
-const mail = nodemailer.createTransport({
-  host: env.SMTP_HOST,
-  port: env.SMTP_PORT,
-  secure: env.SMTP_PORT === 465,
-  requireTLS: !["localhost", "127.0.0.1", "mailpit"].includes(env.SMTP_HOST),
-  ...(env.SMTP_USER
-    ? { auth: { user: env.SMTP_USER, pass: env.SMTP_PASSWORD } }
-    : {}),
-});
+const mail =
+  env.SMTP_ENABLED === "true"
+    ? nodemailer.createTransport({
+        host: env.SMTP_HOST,
+        port: env.SMTP_PORT,
+        secure: env.SMTP_PORT === 465,
+        requireTLS: !["localhost", "127.0.0.1", "mailpit"].includes(
+          env.SMTP_HOST ?? "",
+        ),
+        ...(env.SMTP_USER
+          ? { auth: { user: env.SMTP_USER, pass: env.SMTP_PASSWORD } }
+          : {}),
+      })
+    : null;
 
 export const auth = betterAuth({
   appName: "ImobView",
@@ -31,6 +36,7 @@ export const auth = betterAuth({
     minPasswordLength: 12,
     revokeSessionsOnPasswordReset: true,
     sendResetPassword: async ({ user, url }) => {
+      if (!mail) throw new Error("EmailDeliveryUnavailable");
       await mail.sendMail({
         from: env.SMTP_FROM,
         to: user.email,
