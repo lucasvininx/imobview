@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "audit:ci": "node scripts/audit-ci.mjs",
+    "ops:cleanup-leads": "node scripts/cleanup-leads.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

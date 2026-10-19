@@ -15,6 +15,28 @@ export async function GET() {
         where: { organizationId: actor.organizationId },
         include: { photos: true, tours: { include: { assets: true } } },
       }),
+      brokers: await tx.broker.findMany({
+        where: { organizationId: actor.organizationId },
+      }),
+      leads: await tx.lead.findMany({
+        where: { organizationId: actor.organizationId },
+        include: {
+          requests: true,
+          visits: {
+            select: {
+              id: true,
+              tourId: true,
+              tracking: true,
+              scenes: true,
+              createdAt: true,
+              startedAt: true,
+              completedAt: true,
+              endedAt: true,
+              events: true,
+            },
+          },
+        },
+      }),
     }));
     return new Response(
       JSON.stringify(

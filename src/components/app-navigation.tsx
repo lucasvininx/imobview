@@ -1,10 +1,21 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Building2, Settings, Users } from "lucide-react";
+import {
+  LayoutDashboard,
+  Building2,
+  Settings,
+  Users,
+  CalendarDays,
+  ChartColumn,
+  ContactRound,
+} from "lucide-react";
 const links = [
   { href: "/app", label: "Visão geral", icon: LayoutDashboard },
   { href: "/app/imoveis", label: "Imóveis", icon: Building2 },
+  { href: "/app/leads", label: "Leads e CRM", icon: ContactRound },
+  { href: "/app/agenda", label: "Visitas", icon: CalendarDays },
+  { href: "/app/analytics", label: "Analytics", icon: ChartColumn },
   { href: "/app/equipe", label: "Equipe", icon: Users },
   { href: "/app/configuracoes", label: "Configurações", icon: Settings },
 ];

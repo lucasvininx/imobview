@@ -2011,3 +2011,115 @@ svg {
     animation: none !important;
   }
 }
+
+.lead-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 20px;
+}
+.commercial-stats {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.funnel-row meter::-webkit-meter-bar {
+  background: #26312d;
+  border: 0;
+  border-radius: 4px;
+}
+.funnel-row meter::-webkit-meter-optimum-value {
+  background: #10b981;
+}
+.funnel-row meter::-moz-meter-bar {
+  background: #10b981;
+}
+@media (max-width: 800px) {
+  .commercial-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.lead-grid .form-card {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.check-field {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.check-field input {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-top: 4px;
+  accent-color: var(--accent, #10b981);
+}
+.journey {
+  margin: 24px 0;
+}
+.journey-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 16px 0;
+}
+.journey-controls p {
+  flex-basis: 100%;
+  font-size: 12px;
+}
+.filter-form {
+  display: flex;
+  align-items: end;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+.filter-form .field {
+  flex: 1;
+  min-width: 180px;
+}
+.funnel-row {
+  display: grid;
+  gap: 8px;
+  margin: 18px 0;
+}
+.funnel-row meter {
+  width: 100%;
+  height: 22px;
+  accent-color: #10b981;
+}
+.table-scroll {
+  overflow-x: auto;
+}
+.table-scroll table {
+  border-collapse: collapse;
+  width: 100%;
+  text-align: left;
+}
+.table-scroll th,
+.table-scroll td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+}
+@media (max-width: 500px) {
+  .sidebar {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+  .app-nav {
+    gap: 0;
+    justify-content: space-between;
+    overflow-x: auto;
+  }
+  .app-nav a {
+    padding: 12px 9px;
+    flex-shrink: 0;
+  }
+  .journey .form-card {
+    padding: 18px;
+  }
+}

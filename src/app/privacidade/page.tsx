@@ -24,9 +24,28 @@ export default function Page() {
         </p>
         <h2>Demonstração e navegação</h2>
         <p>
-          Os imóveis demonstrativos são fictícios. Não implementamos cookies
-          publicitários, captação de leads ou rastreamento de interações nesta
-          etapa.
+          Os imóveis demonstrativos são fictícios. Você pode visitar os tours
+          sem se identificar. Se solicitar atendimento, seu nome, e-mail e
+          telefone ficam disponíveis para a imobiliária responsável pelo imóvel.
+          Não solicitamos CPF.
+        </p>
+        <p>
+          A medição de comportamento é opcional e começa apenas após sua
+          escolha. Registramos ambientes abertos, ordem de navegação, tempo com
+          a página visível, cliques em contato e compartilhamento. Você pode
+          parar a medição no próprio tour. A origem é limitada ao domínio de
+          referência ou ao parâmetro utm_source; não armazenamos a URL completa
+          de referência. Não utilizamos cookies publicitários. Uma chave
+          temporária derivada do endereço de rede limita abuso dos formulários,
+          sem guardar o IP em claro nesse módulo.
+        </p>
+        <h2>Solicitações e histórico</h2>
+        <p>
+          Solicitar uma visita não confirma um horário. A imobiliária combina os
+          detalhes diretamente com você. Dados de contato são separados da
+          autorização de medição. Para obter uma cópia ou solicitar exclusão,
+          contate a imobiliária que apresentou o imóvel. A equipe autorizada
+          pode exportar e excluir seu cadastro e histórico no painel.
         </p>
         <h2>Antes da abertura comercial</h2>
         <p>

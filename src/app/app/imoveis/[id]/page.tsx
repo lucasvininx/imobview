@@ -13,6 +13,8 @@ import { CreateTourButton } from "@/features/tours/create-button";
 import "@/features/tours/tour.css";
 import { listPhotos } from "@/features/media/service";
 import { PhotoManager } from "@/features/media/photo-manager";
+import { CommercialForm } from "@/features/properties/commercial-form";
+import { listBrokers } from "@/features/organizations/brokers";
 export const maxDuration = 120;
 export default async function Page({
   params,
@@ -31,6 +33,7 @@ export default async function Page({
   const price = property.priceCents;
   const tours = await listTours(actor, id);
   const photos = await listPhotos(actor, id);
+  const brokers = await listBrokers(actor);
   const initial = {
     title: property.title,
     description: property.description,
@@ -78,6 +81,34 @@ export default async function Page({
       )}
       {can(membership.role, "property:publish") && (
         <StatusActions id={id} status={property.status} />
+      )}
+      {can(membership.role, "property:update") &&
+        property.status !== "ARCHIVED" && (
+          <CommercialForm
+            property={{
+              id: property.id,
+              slug: property.slug,
+              internalCode: property.internalCode,
+              address: property.address,
+              condominium: property.condominium,
+              suites: property.suites,
+              commercialNotes: property.commercialNotes,
+              captureLeads: property.captureLeads,
+              brokerId: property.brokerId,
+              status: property.status,
+            }}
+            brokers={brokers}
+          />
+        )}
+      {can(membership.role, "lead:read") && (
+        <p>
+          <ButtonLink
+            href={`/app/analytics?property=${id}`}
+            variant="secondary"
+          >
+            Ver analytics deste imóvel
+          </ButtonLink>
+        </p>
       )}
       <section aria-labelledby="property-tours" className="tour-panel">
         <h2 id="property-tours">Tours 360°</h2>

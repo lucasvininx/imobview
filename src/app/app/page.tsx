@@ -15,6 +15,7 @@ import {
 import { PageHeader, ButtonLink, EmptyState } from "@/components/ui";
 import { PropertyCard } from "@/components/property-card";
 import { can } from "@/domain/permissions";
+import { commercialOverview } from "@/features/leads/service";
 export default async function Dashboard() {
   const { actor, user, membership } = await requireWorkspace();
   const [allProperties, counts] = await Promise.all([
@@ -24,6 +25,9 @@ export default async function Dashboard() {
   const properties = allProperties.filter(
     (property) => property.status !== "ARCHIVED",
   );
+  const commercial = can(membership.role, "lead:read")
+    ? await commercialOverview(actor)
+    : null;
   const stats = [
     {
       label: "Imóveis no portfólio",
@@ -86,6 +90,26 @@ export default async function Dashboard() {
         </div>
         <Scan size={85} strokeWidth={1} />
       </div>
+      {commercial && (
+        <section className="form-card">
+          <h2>Atendimento comercial</h2>
+          <p>
+            {commercial.leads} novos leads nos últimos 30 dias ·{" "}
+            {commercial.requests} solicitações aguardando confirmação
+          </p>
+          <Link className="text-link" href="/app/leads">
+            Abrir leads e CRM ↗
+          </Link>{" "}
+          ·{" "}
+          <Link className="text-link" href="/app/agenda">
+            Ver solicitações ↗
+          </Link>{" "}
+          ·{" "}
+          <Link className="text-link" href="/app/analytics">
+            Analytics ↗
+          </Link>
+        </section>
+      )}
       <div className="subheading">
         <h2>Seus imóveis recentes</h2>
         <Link href="/app/imoveis">Ver portfólio completo ↗</Link>
@@ -101,7 +125,8 @@ export default async function Dashboard() {
       )}
       <p className="muted" style={{ fontSize: 11, marginTop: 25 }}>
         Abra um imóvel para adicionar fotos, montar seu tour 360° e publicar a
-        apresentação. Vídeos e métricas de interesse estão no roadmap.
+        apresentação. Ative a captura de leads para conectar as visitas ao seu
+        atendimento comercial.
       </p>
     </>
   );

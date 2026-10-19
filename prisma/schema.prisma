@@ -90,6 +90,7 @@ model Organization {
   members OrganizationMember[]
   properties Property[]
   tours Tour[]
+  brokers Broker[]
 }
 
 model OrganizationMember {
@@ -142,6 +143,16 @@ model Property {
   parkingSpaces Int @default(0)
   status PropertyStatus @default(DRAFT)
   cover String?
+  internalCode String @default("") @db.VarChar(80)
+  address String @default("") @db.VarChar(240)
+  condominium String @default("") @db.VarChar(160)
+  suites Int @default(0)
+  commercialNotes String @default("") @db.VarChar(2000)
+  captureLeads Boolean @default(false)
+  brokerId String? @db.Uuid
+  broker Broker? @relation(fields: [brokerId, organizationId], references: [id, organizationId], onDelete: NoAction)
+  leads Lead[]
+  visits TourVisit[]
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
   publishedAt DateTime? @db.Timestamptz(3)
@@ -150,6 +161,99 @@ model Property {
   photos PropertyPhoto[]
   @@index([organizationId, status, createdAt])
   @@unique([id, organizationId])
+}
+
+model Broker {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name String @db.VarChar(120)
+  email String @db.VarChar(254)
+  phone String @db.VarChar(15)
+  active Boolean @default(true)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  properties Property[]
+  @@unique([id, organizationId])
+  @@index([organizationId, active])
+}
+
+model Lead {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  propertyId String @db.Uuid
+  property Property @relation(fields: [propertyId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  name String @db.VarChar(160)
+  email String @db.VarChar(254)
+  phone String @db.VarChar(15)
+  stage String @default("NEW") @db.VarChar(30)
+  notes String @default("") @db.VarChar(5000)
+  source String @default("direct") @db.VarChar(120)
+  consentAt DateTime @default(now()) @db.Timestamptz(3)
+  consentVersion String @default("journey-v1")
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  proposalAt DateTime? @db.Timestamptz(3)
+  wonAt DateTime? @db.Timestamptz(3)
+  visits TourVisit[]
+  requests VisitRequest[]
+  @@unique([id, organizationId])
+  @@index([organizationId, createdAt])
+  @@index([organizationId, propertyId, stage])
+}
+
+model TourVisit {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  propertyId String @db.Uuid
+  property Property @relation(fields: [propertyId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  tourId String @db.Uuid
+  leadId String? @db.Uuid
+  lead Lead? @relation(fields: [leadId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  tokenHash String @unique @db.VarChar(64)
+  abuseKey String @db.VarChar(64)
+  source String @db.VarChar(120)
+  tracking Boolean
+  scenes Json
+  lastSequence Int @default(0)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  lastSeenAt DateTime @default(now()) @db.Timestamptz(3)
+  startedAt DateTime? @db.Timestamptz(3)
+  endedAt DateTime? @db.Timestamptz(3)
+  completedAt DateTime? @db.Timestamptz(3)
+  expiresAt DateTime @db.Timestamptz(3)
+  events JourneyEvent[]
+  @@unique([id, organizationId])
+  @@index([organizationId, propertyId, createdAt])
+  @@index([abuseKey, createdAt])
+  @@index([leadId])
+}
+
+model JourneyEvent {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  visitId String @db.Uuid
+  visit TourVisit @relation(fields: [visitId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  sequence Int
+  kind String @db.VarChar(30)
+  sceneId String? @db.Uuid
+  durationMs Int @default(0)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@unique([visitId, sequence])
+  @@index([organizationId, createdAt])
+}
+
+model VisitRequest {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  leadId String @db.Uuid
+  lead Lead @relation(fields: [leadId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  preferredDate String @db.VarChar(10)
+  period String @db.VarChar(15)
+  status String @default("REQUESTED") @db.VarChar(15)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  @@unique([leadId, preferredDate, period])
+  @@index([organizationId, status, preferredDate])
 }
 
 model PropertyPhoto {

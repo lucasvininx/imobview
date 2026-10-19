@@ -11,6 +11,9 @@ export function ShareButton() {
         onClick={async () => {
           try {
             await navigator.clipboard.writeText(window.location.href);
+            window.dispatchEvent(
+              new CustomEvent("imobview-interaction", { detail: "SHARE" }),
+            );
             setMessage("Link copiado para compartilhar.");
           } catch {
             setMessage("Copie o endereço da página no seu navegador.");

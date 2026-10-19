@@ -6,7 +6,7 @@ import { PropertyGallery } from "./property-gallery";
 import { ShareButton } from "./share-button";
 import { money } from "@/lib/format";
 import type { PublicProperty } from "@/features/properties/public-service";
-import { TourViewer } from "@/features/tours/viewer";
+import { PublicJourney } from "@/features/leads/public-journey";
 import { whatsappUrl } from "@/features/organizations/schema";
 import type { TourSceneView } from "@/features/tours/viewer-types";
 export function PublicPresentation({
@@ -39,9 +39,10 @@ export function PublicPresentation({
         {tours.map((tour) => (
           <section key={tour.id} aria-label={tour.title}>
             <h2>{tour.title}</h2>
-            <TourViewer
-              scenes={tour.scenes}
-              initialSceneId={tour.initialSceneId}
+            <PublicJourney
+              slug={property.slug}
+              tour={tour}
+              capture={!demo && property.captureLeads}
             />
           </section>
         ))}
@@ -59,6 +60,10 @@ export function PublicPresentation({
           <div>
             <Badge active>{demo ? "DEMONSTRAÇÃO" : "IMÓVEL PUBLICADO"}</Badge>
             <h1>{property.title}</h1>
+            {property.internalCode && (
+              <p>Referência: {property.internalCode}</p>
+            )}
+            {property.condominium && <p>Condomínio: {property.condominium}</p>}
             <p style={{ display: "flex", alignItems: "center", gap: 7 }}>
               <MapPin size={15} />
               {property.neighborhood} · {property.city}, {property.state}
@@ -72,6 +77,7 @@ export function PublicPresentation({
                 <BedDouble size={18} />
                 {property.bedrooms} quartos
               </span>
+              {property.suites > 0 && <span>{property.suites} suíte(s)</span>}
               <span>
                 <Bath size={18} />
                 {property.bathrooms} banheiros
@@ -112,8 +118,8 @@ export function PublicPresentation({
                 )}
                 {!contact && !property.contactEmail && (
                   <p>
-                    Consulte a imobili?ria que compartilhou este imóvel para
-                    mais informa??es.
+                    Consulte a imobiliária que compartilhou este imóvel para
+                    mais informações.
                   </p>
                 )}
               </div>

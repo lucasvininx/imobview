@@ -162,6 +162,8 @@ Contato comercial por organização, galeria de fotos, limites configuráveis, r
 - [Lista de lançamento e dependências externas](docs/lancamento.md)
 - [Operação: contas, limites, backups, limpeza e monitoramento](docs/operations.md)
 - [Como fotografar e enviar panoramas 360°](docs/fotos-360.md)
+- [Checklist inicial da jornada comercial](docs/checklist-jornada.md)
+- [Leads, CRM, solicitações, métricas e retenção](docs/jornada-comercial.md)
 
 ```bash
 npm run customer:create -- .local/cliente.json

@@ -12,19 +12,21 @@ export function TourViewer({
   initialSceneId,
   onSceneChange,
   onPositionSelect,
+  onHotspot,
 }: {
   scenes: TourSceneView[];
   initialSceneId?: string | null;
   onSceneChange?: (id: string) => void;
   onPositionSelect?: (position: { yaw: number; pitch: number }) => void;
+  onHotspot?: () => void;
 }) {
   const container = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<Viewer | null>(null);
   const tourRef = useRef<VirtualTourPlugin | null>(null);
-  const callbacks = useRef({ onSceneChange, onPositionSelect });
+  const callbacks = useRef({ onSceneChange, onPositionSelect, onHotspot });
   useEffect(() => {
-    callbacks.current = { onSceneChange, onPositionSelect };
-  }, [onSceneChange, onPositionSelect]);
+    callbacks.current = { onSceneChange, onPositionSelect, onHotspot };
+  }, [onSceneChange, onPositionSelect, onHotspot]);
   const [started, setStarted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -118,7 +120,8 @@ export function TourViewer({
         viewerRef.current = instance;
         const tour = instance.getPlugin<VirtualTourPlugin>(VirtualTourPlugin);
         tourRef.current = tour;
-        tour.addEventListener("node-changed", ({ node }) => {
+        tour.addEventListener("node-changed", ({ node, data }) => {
+          if (data?.fromLink) callbacks.current.onHotspot?.();
           desiredScene.current = node.id;
           setActive(node.id);
           setLoading(false);

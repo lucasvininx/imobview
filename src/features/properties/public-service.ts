@@ -19,6 +19,10 @@ const publicSchema = z.object({
   contactEmail: z.string().default(""),
   whatsapp: z.string().default(""),
   photos: z.array(z.string()).default([]),
+  captureLeads: z.boolean().default(false),
+  internalCode: z.string().default(""),
+  condominium: z.string().default(""),
+  suites: z.number().default(0),
 });
 export type PublicProperty = z.infer<typeof publicSchema>;
 export async function getPublicProperty(slug: string) {
@@ -31,6 +35,14 @@ export async function getPublicProperty(slug: string) {
     unknown[]
   >`SELECT * FROM public.get_property_presentation(${slug})`;
   if (!extra) return null;
+  const [settings] = await db.$queryRaw<
+    {
+      captureLeads: boolean;
+      internalCode: string;
+      condominium: string;
+      suites: number;
+    }[]
+  >`SELECT * FROM public.get_journey_settings(${slug})`;
   const presentation = z
     .object({
       contactEmail: z.string(),
@@ -43,6 +55,10 @@ export async function getPublicProperty(slug: string) {
   );
   return {
     ...publicSchema.parse(rows[0]),
+    captureLeads: settings?.captureLeads ?? false,
+    internalCode: settings?.internalCode ?? "",
+    condominium: settings?.condominium ?? "",
+    suites: settings?.suites ?? 0,
     contactEmail: presentation.contactEmail,
     whatsapp: presentation.whatsapp,
     photos: [...urls.values()],
