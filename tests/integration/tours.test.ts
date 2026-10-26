@@ -69,8 +69,11 @@ beforeAll(async () => {
         initialYaw: 0,
         initialPitch: 0,
         hotspots: [],
+        planPosition: null,
+        infoPoints: [],
       },
     ],
+    floorPlans: [],
   };
 });
 afterAll(async () => {
@@ -150,5 +153,62 @@ describe("Real PostgreSQL tours", () => {
     expect(
       await db.$queryRaw`SELECT * FROM public.get_published_tours(${slug})`,
     ).toEqual([]);
+  });
+  it("accepts only floor plan assets as plans and publishes their images", async () => {
+    const asset = (kind: string) => {
+      const id = randomUUID();
+      return withTenant(actor, "property:update", (tx) =>
+        tx.panoramaAsset.create({
+          data: {
+            id,
+            organizationId: actor.organizationId,
+            tourId,
+            kind,
+            storageKey: randomUUID(),
+            uploadKey: randomUUID(),
+            fileName: `${kind}.webp`,
+            mimeType: "image/png",
+            size: 100,
+            status: "READY",
+          },
+        }),
+      );
+    };
+    const plan = await asset("FLOOR_PLAN");
+    const unused = await asset("FLOOR_PLAN");
+    const panorama = await asset("PANORAMA");
+    const planId = randomUUID();
+    const withPlan = (planAsset: string): TourDocument => ({
+      ...document,
+      floorPlans: [{ id: planId, assetId: planAsset, title: "Térreo" }],
+      scenes: document.scenes.map((scene) => ({
+        ...scene,
+        planPosition: { planId, x: 0.4, y: 0.6 },
+      })),
+    });
+    const tour = await getTour(actor, tourId);
+    await expect(
+      saveTour(actor, {
+        id: tourId,
+        version: tour.version,
+        title: "Tour",
+        document: withPlan(panorama.id),
+      }),
+    ).rejects.toMatchObject({ code: "VALIDATION" });
+    const saved = await saveTour(actor, {
+      id: tourId,
+      version: tour.version,
+      title: "Tour",
+      document: withPlan(plan.id),
+    });
+    await publishTour(actor, tourId, saved, true);
+    const [row] = await db.$queryRaw<
+      { document: TourDocument; assets: { id: string }[] }[]
+    >`SELECT * FROM public.get_published_tours(${slug})`;
+    expect(row.document.floorPlans).toHaveLength(1);
+    const exposed = row.assets.map((item) => item.id);
+    expect(exposed).toContain(plan.id);
+    expect(exposed).not.toContain(unused.id);
+    expect(exposed).not.toContain(panorama.id);
   });
 });

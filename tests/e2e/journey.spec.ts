@@ -36,7 +36,7 @@ test("visitor controls measurement, creates a lead, explores rooms and requests 
     ],
   }));
   await pool.query(
-    'INSERT INTO "Property"(id,"organizationId",title,slug,status,"captureLeads","updatedAt") VALUES($1,$2,$3,$4,\'PUBLISHED\',true,now())',
+    'INSERT INTO "Property"(id,"organizationId",title,slug,status,"captureLeads","priceCents","updatedAt") VALUES($1,$2,$3,$4,\'PUBLISHED\',true,50000000,now())',
     [propertyId, org, "Casa jornada E2E", slug],
   );
   try {
@@ -136,6 +136,27 @@ test("visitor controls measurement, creates a lead, explores rooms and requests 
         { timeout: 15000 },
       )
       .toBeGreaterThan(0);
+    const simulator = page.getByRole("region", {
+      name: "Simule o financiamento",
+    });
+    await simulator.getByLabel("Entrada (R$)").fill("100000");
+    await simulator.getByLabel("Prazo").selectOption("30");
+    await simulator.getByLabel(/Price/).check();
+    await simulator.getByRole("button", { name: "Simular" }).click();
+    await expect(simulator.getByText("Parcela mensal")).toBeVisible();
+    await expect(simulator.getByText(/Renda familiar sugerida/)).toBeVisible();
+    await expect
+      .poll(async () =>
+        Number(
+          (
+            await pool.query(
+              'SELECT count(*) FROM "FinancingSimulation" f JOIN "TourVisit" v ON v.id=f."visitId" WHERE v."propertyId"=$1 AND f."downPaymentCents"=10000000 AND f.system=\'PRICE\'',
+              [propertyId],
+            )
+          ).rows[0].count,
+        ),
+      )
+      .toBe(1);
     await page.getByRole("button", { name: "Parar medição" }).click();
     await expect(page.getByText(/Navegação sem medição/)).toBeVisible();
     expect(
@@ -143,6 +164,25 @@ test("visitor controls measurement, creates a lead, explores rooms and requests 
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     ).toBe(true);
+    await page.reload();
+    await expect(
+      page.getByRole("heading", { name: "Que bom ver você de novo!" }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Continuar visita" }).click();
+    await expect(
+      page.getByRole("button", { name: "Iniciar tour 360°" }),
+    ).toBeVisible();
+    await expect
+      .poll(
+        async () =>
+          (
+            await pool.query(
+              'SELECT count(DISTINCT l.id)::int leads, count(v.id)::int visits FROM "Lead" l JOIN "TourVisit" v ON v."leadId"=l.id WHERE l."propertyId"=$1',
+              [propertyId],
+            )
+          ).rows[0],
+      )
+      .toEqual({ leads: 1, visits: 2 });
     const leadId = (
       await pool.query('SELECT id FROM "Lead" WHERE "propertyId"=$1', [
         propertyId,
@@ -163,6 +203,27 @@ test("visitor controls measurement, creates a lead, explores rooms and requests 
       page.getByRole("heading", { name: "Pessoa Jornada E2E", exact: true }),
     ).toBeVisible();
     await expect(page.getByText(/Origem: whatsapp/)).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Nível de interesse" }),
+    ).toBeVisible();
+    await expect(page.getByText("Voltou ao imóvel (2 visitas)")).toBeVisible();
+    await expect(page.getByText("Simulou financiamento")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Simulações de financiamento" }),
+    ).toBeVisible();
+    await expect(page.getByRole("cell", { name: "30 anos" })).toBeVisible();
+    // Data-subject export must work for leads with financing simulations (BigInt money).
+    const exported = await page.request.get(`/api/leads/${leadId}/export`);
+    expect(exported.status()).toBe(200);
+    const data = await exported.json();
+    expect(
+      data.visits.flatMap((v: { simulations: unknown[] }) => v.simulations),
+    ).toContainEqual(
+      expect.objectContaining({
+        downPaymentCents: "10000000",
+        system: "PRICE",
+      }),
+    );
     await page.getByLabel("Etapa comercial").selectOption("PROPOSAL");
     await page.getByRole("button", { name: "Salvar atendimento" }).click();
     await expect(page.getByText("Lead atualizado.")).toBeVisible();

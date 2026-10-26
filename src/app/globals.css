@@ -2018,7 +2018,12 @@ svg {
   gap: 20px;
 }
 .commercial-stats {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+@media (max-width: 1100px) {
+  .commercial-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 .funnel-row meter::-webkit-meter-bar {
   background: #26312d;
@@ -2121,5 +2126,310 @@ svg {
   }
   .journey .form-card {
     padding: 18px;
+  }
+}
+.lead-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.lead-card-top .eyebrow {
+  margin: 0;
+}
+.interest {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  background: #253129;
+  color: #b2c3b8;
+}
+.interest strong {
+  font-variant-numeric: tabular-nums;
+}
+.interest-hot {
+  background: #4a1d12;
+  color: #ffb199;
+}
+.interest-warm {
+  background: #43360f;
+  color: #f5d77a;
+}
+.interest-cold {
+  background: #1b2a33;
+  color: #9cc3d8;
+}
+.interest-closed {
+  background: #093e2c;
+  color: #71dfad;
+}
+.interest-meter {
+  width: 100%;
+  height: 14px;
+  margin: 12px 0;
+}
+.interest-reasons {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+  display: grid;
+  gap: 6px;
+}
+.interest-reasons li {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+.interest-reasons li span:last-child {
+  color: var(--green);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.interest-reasons li span.negative {
+  color: #ff8f7a;
+}
+.hot-leads {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 16px;
+  display: grid;
+  gap: 4px;
+}
+.hot-leads li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.hot-leads li .muted {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+}
+.financing {
+  margin-top: 32px;
+}
+.financing-systems {
+  border: 0;
+  padding: 0;
+  margin: 8px 0 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 24px;
+}
+.financing-systems legend {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+.financing-systems .check-field {
+  margin: 4px 0;
+}
+.financing-result {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 24px 0 8px;
+}
+.financing-result > div {
+  display: grid;
+  gap: 4px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-raised);
+}
+.financing-result > div strong {
+  font-size: 22px;
+  color: var(--green);
+  font-variant-numeric: tabular-nums;
+}
+.financing-result dl {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 24px;
+  margin: 0;
+  font-size: 14px;
+}
+.financing-result dt {
+  color: var(--muted);
+}
+.financing-result dd {
+  margin: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.financing-result .notice {
+  grid-column: 1 / -1;
+}
+.financing-disclaimer {
+  font-size: 12px;
+}
+@media (max-width: 640px) {
+  .financing-result {
+    grid-template-columns: 1fr;
+  }
+}
+.exterior {
+  margin: 40px 0;
+}
+.exterior-stage {
+  position: relative;
+  height: clamp(380px, 62vh, 620px);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #101d16;
+}
+.exterior-canvas,
+.exterior-canvas canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+}
+.exterior-start {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background:
+    linear-gradient(180deg, rgb(11 15 14 / 0.1), rgb(11 15 14 / 0.65)),
+    radial-gradient(circle at 50% 35%, #2a4a3c, #0b0f0e 70%);
+}
+.exterior-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  gap: 2px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgb(11 15 14 / 0.88);
+  border: 1px solid #10b981;
+  color: #f8faf9;
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.exterior-label span {
+  color: #71dfad;
+}
+.exterior-compass {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgb(11 15 14 / 0.75);
+  border: 1px solid var(--border);
+  display: grid;
+  place-items: center;
+}
+.exterior-compass > div {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  justify-items: center;
+}
+.exterior-compass span {
+  margin-top: 4px;
+  color: #ff8f7a;
+  font-size: 13px;
+  font-weight: 700;
+}
+.exterior-views {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  max-width: calc(100% - 24px);
+}
+.exterior-views button,
+.exterior-dates button {
+  border: 1px solid var(--border);
+  background: rgb(17 24 22 / 0.88);
+  color: #e3ebe6;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.exterior-views button:hover,
+.exterior-dates button[aria-pressed="true"] {
+  border-color: #10b981;
+  background: #093e2c;
+  color: #f8faf9;
+}
+.exterior-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 16px 24px;
+  margin: 16px 0;
+}
+.exterior-dates {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 8px;
+}
+.exterior-dates .field {
+  min-width: 150px;
+}
+.exterior-time {
+  flex: 1;
+  min-width: 220px;
+}
+.exterior-time input {
+  width: 100%;
+  accent-color: #10b981;
+}
+.exterior-time output {
+  font-weight: 700;
+  color: #f8faf9;
+}
+.exterior-sun {
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-raised);
+}
+.exterior-sun p {
+  margin: 0;
+}
+.exterior-sun .muted {
+  margin-top: 4px;
+}
+.exterior-note {
+  font-size: 12px;
+}
+.exterior-amenities {
+  border: 0;
+  padding: 0;
+  margin: 8px 0 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 24px;
+}
+@media (max-width: 640px) {
+  .exterior-views button {
+    padding: 5px 9px;
+    font-size: 11px;
   }
 }

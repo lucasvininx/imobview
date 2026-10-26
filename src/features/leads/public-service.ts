@@ -12,10 +12,23 @@ export function hashToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
 }
 export async function beginVisit(input: unknown, abuseKey: string) {
-  const data = startVisitSchema.parse(input);
+  const { returnKey, ...data } = startVisitSchema.parse(input);
   const token = randomBytes(32).toString("hex");
-  await db.$queryRaw`SELECT public.begin_tour_visit(${JSON.stringify(data)}::jsonb,${hashToken(token)},${abuseKey})`;
-  return { token };
+  const deviceKey = data.contact ? randomBytes(32).toString("hex") : null;
+  const payload = {
+    ...data,
+    ...(returnKey ? { returnKeyHash: hashToken(returnKey) } : {}),
+    ...(deviceKey ? { deviceKeyHash: hashToken(deviceKey) } : {}),
+  };
+  const [row] = await db.$queryRaw<
+    { id: string | null }[]
+  >`SELECT public.begin_tour_visit(${JSON.stringify(payload)}::jsonb,${hashToken(token)},${abuseKey}) AS id`;
+  if (!row?.id)
+    throw new DomainError(
+      "NOT_FOUND",
+      "Não encontramos seu cadastro anterior. Informe seus dados novamente.",
+    );
+  return { token, ...(deviceKey ? { returnKey: deviceKey } : {}) };
 }
 export async function recordEvent(token: unknown, input: unknown) {
   const key = hashToken(tokenSchema.parse(token));

@@ -23,6 +23,8 @@ const publicSchema = z.object({
   internalCode: z.string().default(""),
   condominium: z.string().default(""),
   suites: z.number().default(0),
+  forSale: z.boolean().default(false),
+  financingRateBps: z.number().default(1150),
 });
 export type PublicProperty = z.infer<typeof publicSchema>;
 export async function getPublicProperty(slug: string) {
@@ -43,6 +45,9 @@ export async function getPublicProperty(slug: string) {
       suites: number;
     }[]
   >`SELECT * FROM public.get_journey_settings(${slug})`;
+  const [financing] = await db.$queryRaw<
+    { purpose: string; priceCents: bigint; financingRateBps: number }[]
+  >`SELECT * FROM public.get_financing_settings(${slug})`;
   const presentation = z
     .object({
       contactEmail: z.string(),
@@ -59,6 +64,10 @@ export async function getPublicProperty(slug: string) {
     internalCode: settings?.internalCode ?? "",
     condominium: settings?.condominium ?? "",
     suites: settings?.suites ?? 0,
+    forSale:
+      financing?.purpose === "SALE" &&
+      (financing?.priceCents ?? BigInt(0)) > BigInt(0),
+    financingRateBps: financing?.financingRateBps ?? 1150,
     contactEmail: presentation.contactEmail,
     whatsapp: presentation.whatsapp,
     photos: [...urls.values()],

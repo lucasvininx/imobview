@@ -32,12 +32,24 @@ export default function Page() {
         <p>
           A medição de comportamento é opcional e começa apenas após sua
           escolha. Registramos ambientes abertos, ordem de navegação, tempo com
-          a página visível, cliques em contato e compartilhamento. Você pode
-          parar a medição no próprio tour. A origem é limitada ao domínio de
-          referência ou ao parâmetro utm_source; não armazenamos a URL completa
-          de referência. Não utilizamos cookies publicitários. Uma chave
-          temporária derivada do endereço de rede limita abuso dos formulários,
-          sem guardar o IP em claro nesse módulo.
+          a página visível, cliques em contato e compartilhamento e os valores
+          que você informar no simulador de financiamento (entrada, prazo, taxa
+          e sistema). Você pode parar a medição no próprio tour. A origem é
+          limitada ao domínio de referência ou ao parâmetro utm_source; não
+          armazenamos a URL completa de referência. Não utilizamos cookies
+          publicitários. Uma chave temporária derivada do endereço de rede
+          limita abuso dos formulários, sem guardar o IP em claro nesse módulo.
+        </p>
+        <p>
+          Se você deixar seu contato, guardamos neste navegador uma chave
+          aleatória que permite continuar a visita ao mesmo imóvel sem preencher
+          o formulário de novo e informa à imobiliária que você voltou. A chave
+          não contém seus dados, e o servidor guarda apenas uma versão
+          criptográfica dela. Use &ldquo;Não sou eu&rdquo; no tour para que o
+          navegador a esqueça. Se você informar o mesmo e-mail novamente para o
+          mesmo imóvel, a visita é associada ao cadastro existente; dados
+          diferentes ficam registrados como observação para a imobiliária, sem
+          substituir os anteriores.
         </p>
         <h2>Solicitações e histórico</h2>
         <p>

@@ -49,6 +49,7 @@ export default async function Page({
           ["Visitas solicitadas", data.requests],
           ["Leads com proposta", data.proposals],
           ["Leads com venda registrada", data.sales],
+          ["Simulações de financiamento", data.simulations],
         ].map(([label, value]) => (
           <article className="stat-card" key={label}>
             <p>{label}</p>

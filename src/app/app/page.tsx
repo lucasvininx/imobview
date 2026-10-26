@@ -15,7 +15,8 @@ import {
 import { PageHeader, ButtonLink, EmptyState } from "@/components/ui";
 import { PropertyCard } from "@/components/property-card";
 import { can } from "@/domain/permissions";
-import { commercialOverview } from "@/features/leads/service";
+import { commercialOverview, hotLeads } from "@/features/leads/service";
+import { InterestBadge } from "@/features/leads/interest";
 export default async function Dashboard() {
   const { actor, user, membership } = await requireWorkspace();
   const [allProperties, counts] = await Promise.all([
@@ -25,9 +26,9 @@ export default async function Dashboard() {
   const properties = allProperties.filter(
     (property) => property.status !== "ARCHIVED",
   );
-  const commercial = can(membership.role, "lead:read")
-    ? await commercialOverview(actor)
-    : null;
+  const [commercial, hot] = can(membership.role, "lead:read")
+    ? await Promise.all([commercialOverview(actor), hotLeads(actor, 3)])
+    : [null, null];
   const stats = [
     {
       label: "Imóveis no portfólio",
@@ -97,6 +98,24 @@ export default async function Dashboard() {
             {commercial.leads} novos leads nos últimos 30 dias ·{" "}
             {commercial.requests} solicitações aguardando confirmação
           </p>
+          {hot && hot.count > 0 && (
+            <>
+              <h3>
+                {hot.count === 1
+                  ? "1 lead quente para atender"
+                  : `${hot.count} leads quentes para atender`}
+              </h3>
+              <ul className="hot-leads">
+                {hot.top.map((lead) => (
+                  <li key={lead.id}>
+                    <Link href={`/app/leads/${lead.id}`}>{lead.name}</Link>
+                    <span className="muted">{lead.property.title}</span>
+                    <InterestBadge interest={lead.interest} />
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
           <Link className="text-link" href="/app/leads">
             Abrir leads e CRM ↗
           </Link>{" "}

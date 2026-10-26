@@ -18,10 +18,14 @@ export async function organizationUsage(
   const properties = await tx.property.count({
     where: { organizationId, status: { not: "ARCHIVED" } },
   });
-  const panoramas = await tx.panoramaAsset.count({ where: { organizationId } });
+  // Floor plans use storage but not the panorama allowance.
+  const tourFiles = await tx.panoramaAsset.count({ where: { organizationId } });
+  const panoramas = await tx.panoramaAsset.count({
+    where: { organizationId, kind: "PANORAMA" },
+  });
   const photos = await tx.propertyPhoto.count({ where: { organizationId } });
   const reservedBytes =
-    BigInt(panoramas + photos) * BigInt(uploadReservationBytes);
+    BigInt(tourFiles + photos) * BigInt(uploadReservationBytes);
   return { organization, properties, panoramas, photos, reservedBytes };
 }
 

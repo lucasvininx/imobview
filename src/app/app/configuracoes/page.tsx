@@ -3,6 +3,7 @@ import { PageHeader, Button } from "@/components/ui";
 import { switchWorkspace } from "@/features/organizations/actions";
 import { LogoutButton } from "@/features/auth/logout-button";
 import { ContactForm } from "@/features/organizations/contact-form";
+import { FinancingForm } from "@/features/organizations/financing-form";
 import { can } from "@/domain/permissions";
 import { withTenant } from "@/server/tenant";
 import { organizationUsage } from "@/domain/entitlements";
@@ -19,7 +20,10 @@ export default async function Page() {
       />
       <div className="form-card">
         {can(membership.role, "organization:manage") && (
-          <ContactForm organization={usage.organization} />
+          <>
+            <ContactForm organization={usage.organization} />
+            <FinancingForm rateBps={usage.organization.financingRateBps} />
+          </>
         )}
         <section aria-label="Uso da organização">
           <h2>Uso da organização</h2>

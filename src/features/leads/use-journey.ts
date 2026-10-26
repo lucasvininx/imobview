@@ -2,7 +2,17 @@
 import { useEffect, useRef, useCallback } from "react";
 import type { z } from "zod";
 import type { eventSchema } from "./schema";
+import {
+  financingInputSchema,
+  type FinancingInput,
+} from "@/features/financing/calc";
 type Kind = z.infer<typeof eventSchema>["kind"];
+// Other components report interactions without access to the visit token.
+export type JourneyInteraction =
+  "CONTACT" | "SHARE" | { kind: "SIMULATE"; simulation: FinancingInput };
+export function reportInteraction(detail: JourneyInteraction) {
+  window.dispatchEvent(new CustomEvent("imobview-interaction", { detail }));
+}
 export function useJourney(
   token: string | null,
   enabled: boolean,
@@ -18,13 +28,19 @@ export function useJourney(
     queue: Promise.resolve(),
   });
   const emit = useCallback(
-    (kind: Kind, sceneId: string | null = null, durationMs = 0) => {
+    (
+      kind: Kind,
+      sceneId: string | null = null,
+      durationMs = 0,
+      simulation?: FinancingInput,
+    ) => {
       if (!token || !enabled) return;
       const event = {
         sequence: ++state.current.sequence,
         kind,
         sceneId,
         durationMs: Math.min(30000, Math.max(0, Math.round(durationMs))),
+        ...(simulation ? { simulation } : {}),
       };
       const body = JSON.stringify({ token, event });
       // Serialize requests and reuse sequence on retries; the server deduplicates them.
@@ -70,11 +86,19 @@ export function useJourney(
       state.current.started = false;
     };
     const interaction = (event: Event) => {
-      if (
-        event instanceof CustomEvent &&
-        (event.detail === "CONTACT" || event.detail === "SHARE")
-      )
-        emit(event.detail);
+      if (!(event instanceof CustomEvent)) return;
+      const detail: unknown = event.detail;
+      if (detail === "CONTACT" || detail === "SHARE") emit(detail);
+      else if (
+        detail &&
+        typeof detail === "object" &&
+        "kind" in detail &&
+        detail.kind === "SIMULATE" &&
+        "simulation" in detail
+      ) {
+        const simulation = financingInputSchema.safeParse(detail.simulation);
+        if (simulation.success) emit("SIMULATE", null, 0, simulation.data);
+      }
     };
     const contact = (event: MouseEvent) => {
       const target = event.target;
@@ -118,6 +142,7 @@ export function useJourney(
   return {
     sceneChanged,
     hotspot: () => emit("HOTSPOT", state.current.scene),
+    detail: (sceneId: string) => emit("DETAIL", sceneId),
     stop: () => {
       flush();
       emit("EXIT", state.current.scene);

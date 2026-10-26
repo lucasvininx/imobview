@@ -34,3 +34,41 @@ export async function normalizePanorama(bytes: Buffer) {
     .toBuffer();
   return { clean, width, height };
 }
+// Floor plans are drawings, not panoramas: any proportion, sharp lines kept by
+// high-quality WebP, metadata discarded and size bounded for fast mobile loading.
+export async function normalizeFloorPlan(bytes: Buffer) {
+  if (!bytes.length || bytes.length > MAX_PANORAMA_BYTES)
+    throw new DomainError("VALIDATION", "Arquivo vazio ou acima do limite.");
+  let metadata: Metadata;
+  try {
+    metadata = await sharp(bytes, { limitInputPixels: 34_000_000 }).metadata();
+  } catch {
+    throw new DomainError(
+      "VALIDATION",
+      "Imagem corrompida ou formato inválido.",
+    );
+  }
+  if (
+    !metadata.width ||
+    !metadata.height ||
+    Math.min(metadata.width, metadata.height) < 400 ||
+    !["jpeg", "png", "webp"].includes(metadata.format ?? "") ||
+    (metadata.pages ?? 1) > 1
+  )
+    throw new DomainError(
+      "VALIDATION",
+      "Use a planta em JPEG, PNG ou WebP estático, com pelo menos 400 px de cada lado.",
+    );
+  const { data, info } = await sharp(bytes, { limitInputPixels: 34_000_000 })
+    .rotate()
+    .flatten({ background: "#ffffff" })
+    .resize({
+      width: 2400,
+      height: 2400,
+      fit: "inside",
+      withoutEnlargement: true,
+    })
+    .webp({ quality: 90 })
+    .toBuffer({ resolveWithObject: true });
+  return { clean: data, width: info.width, height: info.height };
+}

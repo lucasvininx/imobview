@@ -15,6 +15,8 @@ import { listPhotos } from "@/features/media/service";
 import { PhotoManager } from "@/features/media/photo-manager";
 import { CommercialForm } from "@/features/properties/commercial-form";
 import { listBrokers } from "@/features/organizations/brokers";
+import { ExteriorForm } from "@/features/exterior/exterior-form";
+import { exteriorSchema } from "@/features/exterior/schema";
 export const maxDuration = 120;
 export default async function Page({
   params,
@@ -98,6 +100,13 @@ export default async function Page({
               status: property.status,
             }}
             brokers={brokers}
+          />
+        )}
+      {can(membership.role, "property:update") &&
+        property.status !== "ARCHIVED" && (
+          <ExteriorForm
+            propertyId={id}
+            initial={exteriorSchema.safeParse(property.exterior).data ?? null}
           />
         )}
       {can(membership.role, "lead:read") && (

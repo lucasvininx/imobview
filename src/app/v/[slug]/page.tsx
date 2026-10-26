@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { getPublicProperty } from "@/features/properties/public-service";
 import { PublicPresentation } from "@/components/public-presentation";
 import { publicTours } from "@/features/tours/presentation";
+import { publicExterior } from "@/features/exterior/service";
 const getProperty = cache(getPublicProperty);
 export const dynamic = "force-dynamic";
 export async function generateMetadata({
@@ -38,6 +39,11 @@ export default async function Page({
   const { slug } = await params;
   const property = await getProperty(slug);
   if (!property) notFound();
-  const tours = await publicTours(slug);
-  return <PublicPresentation property={property} tours={tours} />;
+  const [tours, exterior] = await Promise.all([
+    publicTours(slug),
+    publicExterior(slug),
+  ]);
+  return (
+    <PublicPresentation property={property} tours={tours} exterior={exterior} />
+  );
 }

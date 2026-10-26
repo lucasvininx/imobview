@@ -8,6 +8,13 @@ import { getLead } from "@/features/leads/service";
 import { LeadForm, RequestStatus } from "@/features/leads/lead-form";
 import { durationLabel, summarizeVisit } from "@/features/leads/metrics";
 import { periodLabels } from "@/features/leads/schema";
+import { InterestDetails } from "@/features/leads/interest";
+import {
+  INCOME_COMMITMENT,
+  rateLabel,
+  systemLabels,
+} from "@/features/financing/calc";
+import { money } from "@/lib/format";
 export default async function Page({
   params,
 }: {
@@ -45,6 +52,7 @@ export default async function Page({
           Exportar dados deste lead
         </a>
       </section>
+      <InterestDetails interest={lead.interest} />
       <LeadForm
         id={id}
         stage={lead.stage}
@@ -120,6 +128,70 @@ export default async function Page({
           </section>
         );
       })}
+      <h2>Simulações de financiamento</h2>
+      {(() => {
+        const simulations = lead.visits
+          .flatMap((visit) => visit.simulations)
+          .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+          .slice(0, 10);
+        if (!simulations.length)
+          return (
+            <p className="muted">
+              Nenhuma simulação registrada. Simulações só aparecem quando o
+              visitante autoriza a medição.
+            </p>
+          );
+        return (
+          <section className="form-card">
+            <p className="muted">
+              Valores informados pelo visitante no simulador da página. A
+              parcela é uma estimativa, sem seguros e taxas do banco.
+            </p>
+            <div className="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Entrada</th>
+                    <th>Prazo</th>
+                    <th>Sistema · taxa</th>
+                    <th>1ª parcela</th>
+                    <th>Renda sugerida</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {simulations.map((simulation) => (
+                    <tr key={simulation.id}>
+                      <td>
+                        {simulation.createdAt.toLocaleDateString("pt-BR", {
+                          timeZone: "America/Sao_Paulo",
+                        })}
+                      </td>
+                      <td>{money(simulation.downPaymentCents)}</td>
+                      <td>{simulation.termMonths / 12} anos</td>
+                      <td>
+                        {
+                          systemLabels[
+                            simulation.system as keyof typeof systemLabels
+                          ].split(" ")[0]
+                        }{" "}
+                        · {rateLabel(simulation.rateBps)}
+                      </td>
+                      <td>{money(simulation.installmentCents)}</td>
+                      <td>
+                        {money(
+                          Number(simulation.installmentCents) /
+                            INCOME_COMMITMENT,
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        );
+      })()}
       <h2>Solicitações de visita</h2>
       {!lead.requests.length && <p>Nenhuma solicitação recebida.</p>}
       {lead.requests.map((r) => (

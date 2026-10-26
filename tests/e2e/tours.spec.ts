@@ -108,6 +108,48 @@ test("360 tour uploads, connects rooms, publishes and isolates drafts", async ({
   await page
     .getByRole("button", { name: "Adicionar ponto clicável", exact: true })
     .click();
+  await page.locator(".tour-canvas").click({ position: { x: 320, y: 140 } });
+  await page.getByLabel("Título do detalhe").fill("Piso de madeira");
+  await page
+    .getByLabel("Descrição (opcional)")
+    .fill("Tábuas largas com tratamento antirrisco.");
+  await page
+    .getByRole("button", { name: "Adicionar ponto de informação" })
+    .click();
+  await expect(page.getByText("ⓘ Piso de madeira")).toBeVisible();
+  await page
+    .getByRole("button", { name: "Publicar tour", exact: true })
+    .click();
+  await expect(
+    page.getByText("Tour publicado.", { exact: false }),
+  ).toBeVisible();
+  const plan = await sharp({
+    create: { width: 800, height: 600, channels: 3, background: "#f1f5f9" },
+  })
+    .png()
+    .toBuffer();
+  await page.getByLabel("Enviar planta baixa").setInputFiles({
+    name: "planta-terreo.png",
+    mimeType: "image/png",
+    buffer: plan,
+  });
+  await expect(
+    page.getByText("planta-terreo.png", { exact: true }),
+  ).toBeVisible({ timeout: 30000 });
+  await page.getByRole("button", { name: "Usar no tour", exact: true }).click();
+  await expect(page.getByLabel("Nome do pavimento")).toHaveValue("Térreo");
+  const editorPlan = page.locator(".tour-panel .floor-plan-canvas");
+  for (const [room, x] of [
+    ["Sala · Inicial", 80],
+    ["Quarto", 220],
+  ] as const) {
+    await page
+      .locator(".tour-rooms")
+      .getByRole("button", { name: room, exact: true })
+      .click();
+    await editorPlan.click({ position: { x, y: 60 } });
+  }
+  await expect(page.getByText("2 ambiente(s) marcado(s)")).toBeVisible();
   await page
     .getByRole("button", { name: "Publicar tour", exact: true })
     .click();
@@ -135,6 +177,25 @@ test("360 tour uploads, connects rooms, publishes and isolates drafts", async ({
   await expect(
     viewer.getByRole("button", { name: "Quarto", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
+  await expect(viewer.getByAltText("Planta baixa: Térreo")).toBeVisible();
+  await viewer.getByRole("button", { name: "Abrir Sala pela planta" }).click();
+  await expect(viewer.locator(".tour-info-dot")).toHaveCount(1);
+  await viewer.getByText("Piso de madeira", { exact: true }).click();
+  await expect(
+    viewer.getByText("Tábuas largas com tratamento antirrisco."),
+  ).toBeVisible();
+  await viewer
+    .getByRole("button", { name: "Abrir Quarto pela planta" })
+    .click();
+  await expect(
+    viewer.getByRole("button", { name: "Abrir Quarto pela planta" }),
+  ).toHaveAttribute("aria-current", "location");
+  await viewer.getByRole("button", { name: "Abrir Sala pela planta" }).click();
+  await expect(
+    viewer.getByRole("button", { name: "Sala", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await viewer.getByRole("button", { name: "Ocultar planta" }).click();
+  await expect(viewer.getByAltText("Planta baixa: Térreo")).toHaveCount(0);
   await page.screenshot({
     path: "test-results/tour-public-mobile.png",
     fullPage: true,

@@ -2,36 +2,74 @@
 import { useEffect, useRef, useState } from "react";
 import type { Viewer } from "@photo-sphere-viewer/core";
 import type { VirtualTourPlugin } from "@photo-sphere-viewer/virtual-tour-plugin";
+import type { MarkersPlugin } from "@photo-sphere-viewer/markers-plugin";
 import "@photo-sphere-viewer/core/index.css";
+import "@photo-sphere-viewer/markers-plugin/index.css";
 import "@photo-sphere-viewer/virtual-tour-plugin/index.css";
 import "./tour.css";
 import { Button } from "@/components/ui";
-import type { TourSceneView } from "./viewer-types";
+import type { FloorPlanView, TourSceneView } from "./viewer-types";
+import { FloorPlanMap } from "./floor-plan";
+// Room titles are typed by agencies; the plugin renders tooltips as HTML.
+function escapeHtml(text: string) {
+  return text.replace(
+    /[&<>"']/g,
+    (char) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
+        char
+      ]!,
+  );
+}
 export function TourViewer({
   scenes,
+  floorPlans = [],
   initialSceneId,
   onSceneChange,
   onPositionSelect,
   onHotspot,
+  onInfo,
 }: {
   scenes: TourSceneView[];
+  floorPlans?: FloorPlanView[];
   initialSceneId?: string | null;
   onSceneChange?: (id: string) => void;
   onPositionSelect?: (position: { yaw: number; pitch: number }) => void;
   onHotspot?: () => void;
+  onInfo?: (sceneId: string) => void;
 }) {
   const container = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<Viewer | null>(null);
   const tourRef = useRef<VirtualTourPlugin | null>(null);
-  const callbacks = useRef({ onSceneChange, onPositionSelect, onHotspot });
+  const callbacks = useRef({
+    onSceneChange,
+    onPositionSelect,
+    onHotspot,
+    onInfo,
+  });
   useEffect(() => {
-    callbacks.current = { onSceneChange, onPositionSelect, onHotspot };
-  }, [onSceneChange, onPositionSelect, onHotspot]);
+    callbacks.current = { onSceneChange, onPositionSelect, onHotspot, onInfo };
+  }, [onSceneChange, onPositionSelect, onHotspot, onInfo]);
   const [started, setStarted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [active, setActive] = useState(initialSceneId ?? scenes[0]?.id);
   const [retry, setRetry] = useState(0);
+  const [planOpen, setPlanOpen] = useState(true);
+  const activeScene = scenes.find((scene) => scene.id === active);
+  // Many capture points become one scrollable row that follows the current point.
+  const crowded = scenes.length > 8;
+  const roomNav = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const nav = roomNav.current;
+    const button = nav?.querySelector<HTMLElement>('[aria-pressed="true"]');
+    if (!crowded || !nav || !button) return;
+    nav.scrollTo({
+      left: button.offsetLeft - (nav.clientWidth - button.clientWidth) / 2,
+      behavior: "smooth",
+    });
+  }, [active, crowded]);
+  const hasPlan =
+    floorPlans.length > 0 && scenes.some((scene) => scene.planPosition);
   const desiredScene = useRef(initialSceneId);
   useEffect(() => {
     desiredScene.current = initialSceneId;
@@ -66,8 +104,9 @@ export function TourViewer({
     Promise.all([
       import("@photo-sphere-viewer/core"),
       import("@photo-sphere-viewer/virtual-tour-plugin"),
+      import("@photo-sphere-viewer/markers-plugin"),
     ])
-      .then(([{ Viewer }, { VirtualTourPlugin }]) => {
+      .then(([{ Viewer }, { VirtualTourPlugin }, { MarkersPlugin }]) => {
         if (cancelled || !container.current) return;
         setLoading(true);
         setError("");
@@ -98,12 +137,17 @@ export function TourViewer({
             ctrlZoom: "Segure Ctrl para usar o zoom",
           },
           plugins: [
+            MarkersPlugin.withConfig({ clickEventOnMarker: false }),
             VirtualTourPlugin.withConfig({
               dataMode: "client",
               positionMode: "manual",
               renderMode: "2d",
               preload: false,
-              showLinkTooltip: false,
+              showLinkTooltip: true,
+              getLinkTooltip: (_content, link) =>
+                `<strong>${escapeHtml(
+                  scenes.find((scene) => scene.id === link.nodeId)?.title ?? "",
+                )}</strong>`,
               startNodeId: start.id,
               transitionOptions: { effect: "none", rotation: false },
               nodes: scenes.map((scene) => ({
@@ -113,6 +157,21 @@ export function TourViewer({
                   nodeId: link.targetSceneId,
                   position: { yaw: link.yaw, pitch: link.pitch },
                 })),
+                markers: scene.infoPoints.map((point) => ({
+                  id: point.id,
+                  position: { yaw: point.yaw, pitch: point.pitch },
+                  html: '<span class="tour-info-dot" aria-hidden="true">i</span>',
+                  size: { width: 32, height: 32 },
+                  anchor: "center center",
+                  data: { sceneId: scene.id },
+                  tooltip: {
+                    content: `<strong>${escapeHtml(point.title)}</strong>${
+                      point.text ? `<p>${escapeHtml(point.text)}</p>` : ""
+                    }`,
+                    trigger: "click" as const,
+                    className: "tour-info-tooltip",
+                  },
+                })),
               })),
             }),
           ],
@@ -120,8 +179,21 @@ export function TourViewer({
         viewerRef.current = instance;
         const tour = instance.getPlugin<VirtualTourPlugin>(VirtualTourPlugin);
         tourRef.current = tour;
+        instance
+          .getPlugin<MarkersPlugin>(MarkersPlugin)
+          .addEventListener("select-marker", ({ marker }) =>
+            callbacks.current.onInfo?.(marker.data?.sceneId),
+          );
         tour.addEventListener("node-changed", ({ node, data }) => {
           if (data?.fromLink) callbacks.current.onHotspot?.();
+          // Walking through an arrow keeps the visitor's heading; jumping from the
+          // room buttons or the floor plan opens the view chosen by the agency.
+          const scene = scenes.find((item) => item.id === node.id);
+          if (!data?.fromLink && scene)
+            instance?.rotate({
+              yaw: scene.initialYaw,
+              pitch: scene.initialPitch,
+            });
           desiredScene.current = node.id;
           setActive(node.id);
           setLoading(false);
@@ -165,6 +237,28 @@ export function TourViewer({
         tabIndex={0}
         aria-label="Panorama interativo. Use os controles para mover ou ampliar."
       />
+      {started && hasPlan && (
+        <div
+          className={`tour-plan-overlay${planOpen ? "" : " tour-plan-closed"}`}
+        >
+          <button
+            type="button"
+            className="tour-plan-toggle"
+            aria-expanded={planOpen}
+            onClick={() => setPlanOpen(!planOpen)}
+          >
+            {planOpen ? "Ocultar planta" : "Ver planta"}
+          </button>
+          {planOpen && (
+            <FloorPlanMap
+              plans={floorPlans}
+              scenes={scenes}
+              activeSceneId={active}
+              onSelectScene={navigate}
+            />
+          )}
+        </div>
+      )}
       {!started && (
         <div className="tour-start">
           <h2>Conheça cada ambiente.</h2>
@@ -185,7 +279,11 @@ export function TourViewer({
           <Button onClick={() => setRetry(retry + 1)}>Tentar novamente</Button>
         </div>
       )}
-      <div className="tour-scene-nav" aria-label="Ambientes do tour">
+      <div
+        ref={roomNav}
+        className={`tour-scene-nav${crowded ? " tour-scene-nav-scroll" : ""}`}
+        aria-label="Ambientes do tour"
+      >
         {scenes.map((scene) => (
           <button
             type="button"
@@ -202,6 +300,21 @@ export function TourViewer({
         redor. No celular, use dois dedos. Os ambientes também estão disponíveis
         pelos botões acima.
       </p>
+      {started && !!activeScene?.infoPoints.length && (
+        <div className="tour-info-list" aria-label="Detalhes deste ambiente">
+          {activeScene.infoPoints.map((point) => (
+            <details
+              key={point.id}
+              onToggle={(event) => {
+                if (event.currentTarget.open) onInfo?.(activeScene.id);
+              }}
+            >
+              <summary>{point.title}</summary>
+              {point.text && <p>{point.text}</p>}
+            </details>
+          ))}
+        </div>
+      )}
       {started && (
         <div className="tour-scene-nav" aria-label="Conexões do ambiente">
           {scenes

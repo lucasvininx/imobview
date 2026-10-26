@@ -7,7 +7,13 @@ import { tourDocumentSchema } from "./schema";
 import { Button } from "@/components/ui";
 import { TourViewer } from "./viewer";
 import { PhotoGuide } from "./photo-guide";
-import { type TourDocument, MAX_PANORAMA_BYTES } from "./schema";
+import {
+  type TourDocument,
+  MAX_FLOOR_PLANS,
+  MAX_INFO_POINTS,
+  MAX_PANORAMA_BYTES,
+} from "./schema";
+import { FloorPlanMap } from "./floor-plan";
 import {
   authorizePanoramaAction,
   finalizePanoramaAction,
@@ -15,7 +21,12 @@ import {
   publishTourAction,
   removePanoramaAction,
 } from "./actions";
-type Asset = { id: string; fileName: string; url: string };
+type Asset = {
+  id: string;
+  fileName: string;
+  url: string;
+  kind: "PANORAMA" | "FLOOR_PLAN";
+};
 export function TourEditor({
   id,
   initialTitle,
@@ -58,6 +69,8 @@ export function TourEditor({
     pitch: number;
   } | null>(null);
   const [target, setTarget] = useState("");
+  const [infoTitle, setInfoTitle] = useState("");
+  const [infoText, setInfoText] = useState("");
   const scenes = useMemo(
     () =>
       doc.scenes.flatMap((scene) => {
@@ -66,7 +79,29 @@ export function TourEditor({
       }),
     [doc, initialAssets],
   );
+  const plans = useMemo(
+    () =>
+      doc.floorPlans.flatMap((plan) => {
+        const asset = initialAssets.find((asset) => asset.id === plan.assetId);
+        return asset?.url ? [{ ...plan, url: asset.url }] : [];
+      }),
+    [doc, initialAssets],
+  );
+  const used = new Set([
+    ...doc.scenes.map((scene) => scene.assetId),
+    ...doc.floorPlans.map((plan) => plan.assetId),
+  ]);
   const scene = doc.scenes.find((scene) => scene.id === selected);
+  function placeScene(
+    planPosition: TourDocument["scenes"][number]["planPosition"],
+  ) {
+    update({
+      ...doc,
+      scenes: doc.scenes.map((item) =>
+        item.id === selected ? { ...item, planPosition } : item,
+      ),
+    });
+  }
   useUnsavedChanges(dirty);
   useEffect(() => {
     if (!dirty) return;
@@ -137,9 +172,12 @@ export function TourEditor({
       setPending(false);
     }
   }
-  async function upload(file: File) {
+  async function upload(file: File, kind: Asset["kind"] = "PANORAMA") {
+    const plan = kind === "FLOOR_PLAN";
     if (dirty) {
-      setError("Salve o rascunho antes de enviar um panorama.");
+      setError(
+        `Salve o rascunho antes de enviar ${plan ? "uma planta" : "um panorama"}.`,
+      );
       return;
     }
     if (
@@ -152,8 +190,15 @@ export function TourEditor({
     await run(async () => {
       const bitmap = await createImageBitmap(file);
       const { width, height } = bitmap;
-      const valid = width === height * 2 && width >= 1024 && width <= 8192;
       bitmap.close();
+      if (plan && Math.min(width, height) < 400) {
+        setError(
+          `Recebemos ${width} × ${height} pixels. Envie a planta com pelo menos 400 px de cada lado para que os ambientes fiquem legíveis.`,
+        );
+        return;
+      }
+      const valid =
+        plan || (width === height * 2 && width >= 1024 && width <= 8192);
       if (!valid) {
         setError(
           `Recebemos ${width} × ${height} pixels. Use uma foto 360° completa em proporção 2:1, por exemplo 4096 × 2048 px, com largura entre 1024 e 8192 px. Não recorte uma foto comum para adaptar.`,
@@ -162,6 +207,7 @@ export function TourEditor({
       }
       const authorized = await authorizePanoramaAction({
         tourId: id,
+        kind,
         fileName: file.name,
         mimeType: file.type,
         size: file.size,
@@ -190,13 +236,19 @@ export function TourEditor({
           xhr.ontimeout = () => reject(new Error("timeout"));
           xhr.send(file);
         });
-        setMessage("Upload concluído. Validando o panorama…");
+        setMessage(
+          `Upload concluído. Validando ${plan ? "a planta" : "o panorama"}…`,
+        );
         const result = await finalizePanoramaAction(authorized.id);
         if (!result.success) {
           setError(result.error);
           return;
         }
-        setMessage("Panorama validado. Adicione-o como ambiente abaixo.");
+        setMessage(
+          plan
+            ? "Planta validada. Use-a no tour no painel Planta baixa."
+            : "Panorama validado. Adicione-o como ambiente abaixo.",
+        );
       } finally {
         setUploadProgress(null);
         router.refresh();
@@ -398,8 +450,7 @@ export function TourEditor({
               <h2>Panoramas disponíveis</h2>
               {initialAssets
                 .filter(
-                  (asset) =>
-                    !doc.scenes.some((scene) => scene.assetId === asset.id),
+                  (asset) => asset.kind === "PANORAMA" && !used.has(asset.id),
                 )
                 .map((asset) => (
                   <div key={asset.id}>
@@ -435,6 +486,8 @@ export function TourEditor({
                               initialYaw: 0,
                               initialPitch: 0,
                               hotspots: [],
+                              planPosition: null,
+                              infoPoints: [],
                             },
                           ],
                         });
@@ -447,11 +500,147 @@ export function TourEditor({
                 ))}
             </div>
           )}
+          <div className="tour-panel">
+            <h2>Planta baixa</h2>
+            <p className="muted">
+              Opcional. Mostra no tour onde fica cada ambiente; o visitante pode
+              clicar na planta para ir até ele. Use um pavimento por imagem.
+            </p>
+            {canEdit && (
+              <label className="field">
+                Enviar planta baixa
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  disabled={
+                    pending ||
+                    !storageReady ||
+                    !hydrated ||
+                    doc.floorPlans.length >= MAX_FLOOR_PLANS
+                  }
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (file) void upload(file, "FLOOR_PLAN");
+                    event.target.value = "";
+                  }}
+                />
+                <span className="muted">
+                  Imagem da planta · JPEG, PNG ou WebP · Até {MAX_FLOOR_PLANS}{" "}
+                  pavimentos
+                </span>
+              </label>
+            )}
+            {doc.floorPlans.map((plan, index) => (
+              <div key={plan.id} className="tour-plan-item">
+                <label className="field">
+                  Nome do pavimento
+                  <input
+                    maxLength={40}
+                    disabled={!canEdit || pending}
+                    value={plan.title}
+                    onChange={(event) =>
+                      update({
+                        ...doc,
+                        floorPlans: doc.floorPlans.map((item, i) =>
+                          i === index
+                            ? { ...item, title: event.target.value }
+                            : item,
+                        ),
+                      })
+                    }
+                  />
+                </label>
+                <span className="muted">
+                  {
+                    doc.scenes.filter(
+                      (item) => item.planPosition?.planId === plan.id,
+                    ).length
+                  }{" "}
+                  ambiente(s) marcado(s)
+                </span>
+                {canEdit && (
+                  <Button
+                    variant="quiet"
+                    disabled={pending}
+                    onClick={() => {
+                      if (
+                        !confirm(
+                          "Remover esta planta do tour? As marcações dos ambientes nela serão apagadas.",
+                        )
+                      )
+                        return;
+                      update({
+                        ...doc,
+                        floorPlans: doc.floorPlans.filter(
+                          (item) => item.id !== plan.id,
+                        ),
+                        scenes: doc.scenes.map((item) =>
+                          item.planPosition?.planId === plan.id
+                            ? { ...item, planPosition: null }
+                            : item,
+                        ),
+                      });
+                    }}
+                  >
+                    Remover planta
+                  </Button>
+                )}
+              </div>
+            ))}
+            {canEdit &&
+              initialAssets
+                .filter(
+                  (asset) => asset.kind === "FLOOR_PLAN" && !used.has(asset.id),
+                )
+                .map((asset) => (
+                  <div key={asset.id}>
+                    <p>{asset.fileName}</p>
+                    <Button
+                      variant="quiet"
+                      disabled={pending || dirty}
+                      onClick={() => {
+                        if (confirm("Excluir esta planta sem uso?"))
+                          void run(async () => {
+                            const result = await removePanoramaAction(asset.id);
+                            if (!result.success) setError(result.error);
+                            else window.location.reload();
+                          });
+                      }}
+                    >
+                      Excluir arquivo
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      disabled={
+                        pending || doc.floorPlans.length >= MAX_FLOOR_PLANS
+                      }
+                      onClick={() =>
+                        update({
+                          ...doc,
+                          floorPlans: [
+                            ...doc.floorPlans,
+                            {
+                              id: crypto.randomUUID(),
+                              assetId: asset.id,
+                              title: doc.floorPlans.length
+                                ? `Pavimento ${doc.floorPlans.length + 1}`
+                                : "Térreo",
+                            },
+                          ],
+                        })
+                      }
+                    >
+                      Usar no tour
+                    </Button>
+                  </div>
+                ))}
+          </div>
         </aside>
         <div>
           {scenes.length > 0 ? (
             <TourViewer
               scenes={scenes}
+              floorPlans={plans}
               initialSceneId={selected}
               onSceneChange={(sceneId) => {
                 setSelected(sceneId);
@@ -514,6 +703,7 @@ export function TourEditor({
                         ),
                       }));
                     update({
+                      ...doc,
                       scenes: remaining,
                       initialSceneId:
                         doc.initialSceneId === selected
@@ -526,13 +716,49 @@ export function TourEditor({
                   Remover ambiente
                 </Button>
               </div>
+              <h2>Posição na planta</h2>
+              {!plans.length ? (
+                <p className="muted">
+                  Envie e use uma planta baixa no painel ao lado para marcar
+                  onde fica este ambiente.
+                </p>
+              ) : (
+                <>
+                  <p>
+                    Clique na planta onde fica <strong>{scene.title}</strong>.
+                    {scene.planPosition
+                      ? " Clique de novo para ajustar."
+                      : " Ainda sem marcação."}
+                  </p>
+                  <FloorPlanMap
+                    plans={plans}
+                    scenes={doc.scenes}
+                    activeSceneId={selected}
+                    onSelectScene={(sceneId) => {
+                      setSelected(sceneId);
+                      setPosition(null);
+                    }}
+                    onPlace={(planPosition) => placeScene(planPosition)}
+                  />
+                  {scene.planPosition && (
+                    <Button
+                      variant="quiet"
+                      disabled={pending}
+                      onClick={() => placeScene(null)}
+                    >
+                      Remover da planta
+                    </Button>
+                  )}
+                </>
+              )}
               <h2>Conectar a outro ambiente</h2>
               <p>
                 Clique no panorama para marcar a posição do ponto de navegação.
               </p>
               {position && (
                 <p className="notice">
-                  Posição selecionada. Escolha o destino e adicione a conexão.
+                  Posição selecionada. Escolha o destino e adicione a conexão,
+                  ou use-a para um ponto de informação abaixo.
                 </p>
               )}
               <label className="field">
@@ -613,6 +839,95 @@ export function TourEditor({
                       }
                     >
                       Remover ponto
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+              <h2>Pontos de informação</h2>
+              <p>
+                Destaque um detalhe do ambiente, como acabamentos, móveis
+                planejados ou a vista. Clique no panorama onde o detalhe está,
+                escreva e adicione. O visitante vê um “i” clicável no tour.
+              </p>
+              <label className="field">
+                Título do detalhe
+                <input
+                  maxLength={60}
+                  disabled={pending}
+                  value={infoTitle}
+                  placeholder="Ex.: Piso em porcelanato"
+                  onChange={(event) => setInfoTitle(event.target.value)}
+                />
+              </label>
+              <label className="field">
+                Descrição (opcional)
+                <textarea
+                  maxLength={280}
+                  rows={2}
+                  disabled={pending}
+                  value={infoText}
+                  onChange={(event) => setInfoText(event.target.value)}
+                />
+              </label>
+              <Button
+                disabled={
+                  !position ||
+                  !infoTitle.trim() ||
+                  pending ||
+                  scene.infoPoints.length >= MAX_INFO_POINTS
+                }
+                onClick={() => {
+                  if (!position) return;
+                  update({
+                    ...doc,
+                    scenes: doc.scenes.map((item) =>
+                      item.id === selected
+                        ? {
+                            ...item,
+                            infoPoints: [
+                              ...item.infoPoints,
+                              {
+                                id: crypto.randomUUID(),
+                                title: infoTitle.trim(),
+                                text: infoText.trim(),
+                                ...position,
+                              },
+                            ],
+                          }
+                        : item,
+                    ),
+                  });
+                  setPosition(null);
+                  setInfoTitle("");
+                  setInfoText("");
+                }}
+              >
+                Adicionar ponto de informação
+              </Button>
+              <ul className="tour-links">
+                {scene.infoPoints.map((point) => (
+                  <li key={point.id}>
+                    <span>ⓘ {point.title}</span>
+                    <Button
+                      variant="quiet"
+                      disabled={pending}
+                      onClick={() =>
+                        update({
+                          ...doc,
+                          scenes: doc.scenes.map((item) =>
+                            item.id === selected
+                              ? {
+                                  ...item,
+                                  infoPoints: item.infoPoints.filter(
+                                    (info) => info.id !== point.id,
+                                  ),
+                                }
+                              : item,
+                          ),
+                        })
+                      }
+                    >
+                      Remover detalhe
                     </Button>
                   </li>
                 ))}

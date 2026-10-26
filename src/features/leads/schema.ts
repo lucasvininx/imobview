@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { financingInputSchema } from "@/features/financing/calc";
 
 export const stageLabels = {
   NEW: "Novo lead",
@@ -40,6 +41,11 @@ export const startVisitSchema = z
     tourId: z.uuid(),
     tracking: z.boolean(),
     contact: contactSchema.optional(),
+    // Random browser key issued after identification; only its hash is stored.
+    returnKey: z
+      .string()
+      .regex(/^[a-f0-9]{64}$/)
+      .optional(),
     source: z
       .string()
       .max(120)
@@ -48,24 +54,36 @@ export const startVisitSchema = z
     website: z.string().max(0).default(""),
   })
   .refine(
-    (v) => v.tracking || !!v.contact,
+    (v) => v.tracking || !!v.contact || !!v.returnKey,
     "Escolha o que deseja compartilhar.",
+  )
+  .refine(
+    (v) => !(v.contact && v.returnKey),
+    "Informe os dados ou continue como visitante reconhecido.",
   );
-export const eventSchema = z.object({
-  sequence: z.number().int().min(1).max(2500),
-  kind: z.enum([
-    "START",
-    "SCENE",
-    "HEARTBEAT",
-    "EXIT",
-    "COMPLETE",
-    "CONTACT",
-    "SHARE",
-    "HOTSPOT",
-  ]),
-  sceneId: z.uuid().nullable().default(null),
-  durationMs: z.number().int().min(0).max(30000).default(0),
-});
+export const eventSchema = z
+  .object({
+    sequence: z.number().int().min(1).max(2500),
+    kind: z.enum([
+      "START",
+      "SCENE",
+      "HEARTBEAT",
+      "EXIT",
+      "COMPLETE",
+      "CONTACT",
+      "SHARE",
+      "HOTSPOT",
+      "SIMULATE",
+      "DETAIL",
+    ]),
+    sceneId: z.uuid().nullable().default(null),
+    durationMs: z.number().int().min(0).max(30000).default(0),
+    simulation: financingInputSchema.optional(),
+  })
+  .refine(
+    (event) => (event.kind === "SIMULATE") === !!event.simulation,
+    "Simulação inválida.",
+  );
 export const tokenSchema = z.string().regex(/^[a-f0-9]{64}$/);
 export const visitRequestSchema = z.object({
   preferredDate: z.iso.date().refine((v) => {

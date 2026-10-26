@@ -54,6 +54,7 @@ export default async function Page({
           id: asset.id,
           fileName: asset.fileName,
           url: urls.get(asset.storageKey) ?? "",
+          kind: asset.kind === "FLOOR_PLAN" ? "FLOOR_PLAN" : "PANORAMA",
         }))}
         canEdit={
           can(membership.role, "property:update") &&
