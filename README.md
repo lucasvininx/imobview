@@ -14,6 +14,10 @@ Plataforma brasileira para organizar e apresentar imóveis. Este é o código-ba
 
 - Editor de tours 360° por imóvel: panoramas 2:1, ambientes, pontos clicáveis, visualizador WebGL, rascunhos e publicação independente.
 - Upload direto para bucket privado do Supabase, validação real dos pixels, remoção de metadados e URLs temporárias. Exige conexão ao projeto e configuração do Storage; não existe upload fictício na aplicação.
+- Planta baixa opcional no tour (até 5 pavimentos): a imobiliária marca cada ambiente na planta e o visitante navega clicando nela.
+- Vista 3D externa do condomínio: maquete gerada a partir de torres, andares, posição do apartamento e lazer, com controle tipo drone, sol e sombras reais por data e horário e horas de sol direto na fachada. A página pública recebe só coordenadas arredondadas.
+- Pontos de informação ("i") nos ambientes do tour: a imobiliária destaca acabamentos e itens; cada detalhe aberto conta na nota de interesse.
+- Simulador de financiamento (SAC/Price) nos imóveis à venda, com taxa inicial configurável por imobiliária. Com medição autorizada, entrada, prazo e parcela aparecem na ficha do lead e contam na nota de interesse.
 
 Vídeos, analytics, convites, cobrança, autosave e onboarding comercial ainda não estão implementados. A página de contato é informativa; não há formulário que finja enviar mensagens.
 

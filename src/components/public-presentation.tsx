@@ -8,20 +8,20 @@ import { money } from "@/lib/format";
 import type { PublicProperty } from "@/features/properties/public-service";
 import { PublicJourney } from "@/features/leads/public-journey";
 import { whatsappUrl } from "@/features/organizations/schema";
-import type { TourSceneView } from "@/features/tours/viewer-types";
+import type { TourView } from "@/features/tours/viewer-types";
+import { FinancingSimulator } from "@/features/financing/simulator";
+import { ExteriorViewer } from "@/features/exterior/viewer";
+import type { ExteriorConfig } from "@/features/exterior/schema";
 export function PublicPresentation({
   property,
   demo = false,
   tours = [],
+  exterior = null,
 }: {
   property: PublicProperty;
   demo?: boolean;
-  tours?: {
-    id: string;
-    title: string;
-    initialSceneId: string | null;
-    scenes: TourSceneView[];
-  }[];
+  tours?: TourView[];
+  exterior?: ExteriorConfig | null;
 }) {
   const contact = whatsappUrl(
     property.whatsapp,
@@ -46,6 +46,9 @@ export function PublicPresentation({
             />
           </section>
         ))}
+        {exterior && (
+          <ExteriorViewer config={exterior} title={property.title} />
+        )}
         {demo && (
           <p className="notice">
             Apresentação demonstrativa · Imóvel fictício. Explore os ambientes
@@ -127,6 +130,12 @@ export function PublicPresentation({
             <p style={{ fontSize: 10 }}>Uma apresentação ImobView°</p>
           </aside>
         </div>
+        {property.forSale && (
+          <FinancingSimulator
+            priceCents={Number(property.priceCents)}
+            defaultRateBps={property.financingRateBps}
+          />
+        )}
       </main>
       <SiteFooter />
     </>

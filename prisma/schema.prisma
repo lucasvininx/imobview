@@ -85,6 +85,7 @@ model Organization {
   maxProperties Int @default(30)
   maxStorageBytes BigInt @default(2147483648)
   maxPanoramas Int @default(300)
+  financingRateBps Int @default(1150)
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
   members OrganizationMember[]
@@ -149,6 +150,7 @@ model Property {
   suites Int @default(0)
   commercialNotes String @default("") @db.VarChar(2000)
   captureLeads Boolean @default(false)
+  exterior Json?
   brokerId String? @db.Uuid
   broker Broker? @relation(fields: [brokerId, organizationId], references: [id, organizationId], onDelete: NoAction)
   leads Lead[]
@@ -196,9 +198,23 @@ model Lead {
   wonAt DateTime? @db.Timestamptz(3)
   visits TourVisit[]
   requests VisitRequest[]
+  devices LeadDevice[]
   @@unique([id, organizationId])
   @@index([organizationId, createdAt])
+  @@index([organizationId, updatedAt])
   @@index([organizationId, propertyId, stage])
+  @@index([organizationId, propertyId, email])
+}
+
+model LeadDevice {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  leadId String @db.Uuid
+  lead Lead @relation(fields: [leadId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  keyHash String @unique @db.VarChar(64)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  lastUsedAt DateTime @default(now()) @db.Timestamptz(3)
+  @@index([leadId])
 }
 
 model TourVisit {
@@ -222,6 +238,7 @@ model TourVisit {
   completedAt DateTime? @db.Timestamptz(3)
   expiresAt DateTime @db.Timestamptz(3)
   events JourneyEvent[]
+  simulations FinancingSimulation[]
   @@unique([id, organizationId])
   @@index([organizationId, propertyId, createdAt])
   @@index([abuseKey, createdAt])
@@ -240,6 +257,21 @@ model JourneyEvent {
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   @@unique([visitId, sequence])
   @@index([organizationId, createdAt])
+}
+
+model FinancingSimulation {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  visitId String @db.Uuid
+  visit TourVisit @relation(fields: [visitId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  downPaymentCents BigInt
+  termMonths Int
+  rateBps Int
+  system String @db.VarChar(5)
+  installmentCents BigInt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@index([organizationId, createdAt])
+  @@index([visitId])
 }
 
 model VisitRequest {
@@ -309,6 +341,7 @@ model PanoramaAsset {
   tour Tour @relation(fields: [tourId, organizationId], references: [id, organizationId], onDelete: Cascade)
   storageKey String @unique
   uploadKey String @unique
+  kind String @default("PANORAMA") @db.VarChar(12)
   fileName String @db.VarChar(160)
   mimeType String
   size Int

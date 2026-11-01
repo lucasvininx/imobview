@@ -1,6 +1,7 @@
 import { PublicPresentation } from "@/components/public-presentation";
 import { getPublicProperty } from "@/features/properties/public-service";
 import { publicTours } from "@/features/tours/presentation";
+import { publicExterior } from "@/features/exterior/service";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { ButtonLink } from "@/components/ui";
@@ -20,6 +21,7 @@ export default async function Demo() {
         demo
         property={property}
         tours={await publicTours(slug)}
+        exterior={await publicExterior(slug)}
       />
     );
   return (

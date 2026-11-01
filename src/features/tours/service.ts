@@ -13,13 +13,43 @@ import {
   saveTourSchema,
   tourDocumentSchema,
   uploadSchema,
+  type TourDocument,
 } from "./schema";
+import type { Prisma } from "@/generated/prisma/client";
 import {
   createPanoramaUpload,
   inspectAndPromotePanorama,
   removeTemporaryPanorama,
 } from "@/server/supabase/storage";
 const idSchema = z.uuid();
+// Every referenced image must be a validated asset of this tour, used in the role it was uploaded for.
+async function assertTourAssets(
+  tx: Prisma.TransactionClient,
+  actor: Actor,
+  tourId: string,
+  document: TourDocument,
+  message: string,
+) {
+  for (const [kind, ids] of [
+    ["PANORAMA", document.scenes.map((scene) => scene.assetId)],
+    ["FLOOR_PLAN", document.floorPlans.map((plan) => plan.assetId)],
+  ] as const) {
+    const unique = [...new Set(ids)];
+    if (
+      unique.length &&
+      (await tx.panoramaAsset.count({
+        where: {
+          id: { in: unique },
+          organizationId: actor.organizationId,
+          tourId,
+          status: "READY",
+          kind,
+        },
+      })) !== unique.length
+    )
+      throw new DomainError("VALIDATION", message);
+  }
+}
 export function listTours(actor: Actor, propertyId: string) {
   idSchema.parse(propertyId);
   return withTenant(actor, "property:read", (tx) =>
@@ -83,23 +113,13 @@ export function saveTour(actor: Actor, input: unknown) {
     if (!tour) throw new DomainError("NOT_FOUND", "Tour não encontrado.");
     if (tour.status === "ARCHIVED" || tour.property.status === "ARCHIVED")
       throw new DomainError("CONFLICT", "Este conteúdo está arquivado.");
-    const assetIds = [
-      ...new Set(parsed.document.scenes.map((scene) => scene.assetId)),
-    ];
-    if (
-      (await tx.panoramaAsset.count({
-        where: {
-          id: { in: assetIds },
-          organizationId: actor.organizationId,
-          tourId: tour.id,
-          status: "READY",
-        },
-      })) !== assetIds.length
-    )
-      throw new DomainError(
-        "VALIDATION",
-        "Use apenas panoramas validados deste tour.",
-      );
+    await assertTourAssets(
+      tx,
+      actor,
+      tour.id,
+      parsed.document,
+      "Use apenas panoramas e plantas validados deste tour.",
+    );
     const result = await tx.tour.updateMany({
       where: {
         id: tour.id,
@@ -141,18 +161,13 @@ export function publishTour(
     if (publish) {
       const issues = publicationIssues(document);
       if (issues.length) throw new DomainError("VALIDATION", issues[0]);
-      const ids = [...new Set(document.scenes.map((s) => s.assetId))];
-      if (
-        (await tx.panoramaAsset.count({
-          where: {
-            id: { in: ids },
-            tourId: id,
-            organizationId: actor.organizationId,
-            status: "READY",
-          },
-        })) !== ids.length
-      )
-        throw new DomainError("VALIDATION", "Há panoramas não validados.");
+      await assertTourAssets(
+        tx,
+        actor,
+        id,
+        document,
+        "Há panoramas ou plantas não validados.",
+      );
     }
     const result = await tx.tour.updateMany({
       where: { id, organizationId: actor.organizationId, version },
@@ -182,7 +197,7 @@ export async function authorizePanorama(actor: Actor, input: unknown) {
     if (!tour) throw new DomainError("NOT_FOUND", "Tour não encontrado.");
     if (tour.status === "ARCHIVED" || tour.property.status === "ARCHIVED")
       throw new DomainError("CONFLICT", "Conteúdo arquivado.");
-    await reserveUpload(tx, actor.organizationId, true);
+    await reserveUpload(tx, actor.organizationId, parsed.kind === "PANORAMA");
     await tx.$queryRaw`SELECT id FROM "Tour" WHERE id=${tour.id}::uuid FOR UPDATE`;
     if (
       (await tx.panoramaAsset.count({
@@ -203,7 +218,7 @@ export async function authorizePanorama(actor: Actor, input: unknown) {
         id,
         organizationId: actor.organizationId,
         ...parsed,
-        storageKey: `${prefix}/panorama.jpg`,
+        storageKey: `${prefix}/${parsed.kind === "FLOOR_PLAN" ? "plan.webp" : "panorama.jpg"}`,
         uploadKey: `${prefix}/upload`,
       },
     });
@@ -238,6 +253,7 @@ export async function finalizePanorama(actor: Actor, id: string) {
         asset.uploadKey,
         asset.storageKey,
         asset.size,
+        asset.kind === "FLOOR_PLAN" ? "FLOOR_PLAN" : "PANORAMA",
       );
       const ready = await tx.panoramaAsset.update({
         where: { id, organizationId: actor.organizationId },
@@ -273,11 +289,14 @@ export async function removePanorama(actor: Actor, id: string) {
       if (
         [...draft.scenes, ...(published?.scenes ?? [])].some(
           (scene) => scene.assetId === id,
+        ) ||
+        [...draft.floorPlans, ...(published?.floorPlans ?? [])].some(
+          (plan) => plan.assetId === id,
         )
       )
         throw new DomainError(
           "CONFLICT",
-          "Este panorama está no rascunho ou na última publicação. Remova o ambiente, salve e publique a atualização antes de excluir o arquivo.",
+          "Este arquivo está no rascunho ou na última publicação. Remova o ambiente ou a planta, salve e publique a atualização antes de excluir o arquivo.",
         );
       // Delete storage before releasing the reservation; a failed removal remains retryable.
       await removeTemporaryPanorama(asset.uploadKey);

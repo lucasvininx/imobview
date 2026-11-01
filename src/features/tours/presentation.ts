@@ -3,22 +3,38 @@ import { z } from "zod";
 import { db } from "@/server/db";
 import { signPanoramas } from "@/server/supabase/storage";
 import { tourDocumentSchema, type TourDocument } from "./schema";
-import type { TourSceneView } from "./viewer-types";
-export async function sceneViews(
+import type { FloorPlanView, TourSceneView } from "./viewer-types";
+// Signs every referenced image in one request; missing objects are dropped instead of breaking the tour.
+export async function tourMedia(
   document: TourDocument,
   assets: { id: string; storageKey: string }[],
-): Promise<TourSceneView[]> {
-  const keys = document.scenes
-    .map(
-      (scene) => assets.find((asset) => asset.id === scene.assetId)?.storageKey,
-    )
-    .filter((key): key is string => !!key);
+): Promise<{ scenes: TourSceneView[]; floorPlans: FloorPlanView[] }> {
+  const keyOf = (assetId: string) =>
+    assets.find((asset) => asset.id === assetId)?.storageKey;
+  const keys = [
+    ...document.scenes.map((scene) => keyOf(scene.assetId)),
+    ...document.floorPlans.map((plan) => keyOf(plan.assetId)),
+  ].filter((key): key is string => !!key);
   const urls = await signPanoramas(keys);
-  return document.scenes.flatMap((scene) => {
-    const key = assets.find((asset) => asset.id === scene.assetId)?.storageKey;
-    const panoramaUrl = key ? urls.get(key) : undefined;
-    return panoramaUrl ? [{ ...scene, panoramaUrl }] : [];
+  const urlOf = (assetId: string) => {
+    const key = keyOf(assetId);
+    return key ? urls.get(key) : undefined;
+  };
+  const floorPlans = document.floorPlans.flatMap((plan) => {
+    const url = urlOf(plan.assetId);
+    return url ? [{ ...plan, url }] : [];
   });
+  const planIds = new Set(floorPlans.map((plan) => plan.id));
+  const scenes = document.scenes.flatMap((scene) => {
+    const panoramaUrl = urlOf(scene.assetId);
+    if (!panoramaUrl) return [];
+    const planPosition =
+      scene.planPosition && planIds.has(scene.planPosition.planId)
+        ? scene.planPosition
+        : null;
+    return [{ ...scene, planPosition, panoramaUrl }];
+  });
+  return { scenes, floorPlans };
 }
 const publicTourSchema = z.object({
   id: z.uuid(),
@@ -38,7 +54,7 @@ export async function publicTours(slug: string) {
         id: tour.id,
         title: tour.title,
         initialSceneId: tour.document.initialSceneId,
-        scenes: await sceneViews(tour.document, tour.assets),
+        ...(await tourMedia(tour.document, tour.assets)),
       };
     }),
   );

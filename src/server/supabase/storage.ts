@@ -1,7 +1,10 @@
 import "server-only";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { normalizePanorama } from "@/features/tours/normalize-panorama";
+import {
+  normalizeFloorPlan,
+  normalizePanorama,
+} from "@/features/tours/normalize-panorama";
 import { MAX_PANORAMA_BYTES } from "@/features/tours/schema";
 import { DomainError } from "@/domain/errors";
 import sharp from "sharp";
@@ -43,6 +46,7 @@ export async function inspectAndPromotePanorama(
   uploadKey: string,
   storageKey: string,
   expectedSize: number,
+  kind: "PANORAMA" | "FLOOR_PLAN" = "PANORAMA",
 ) {
   const bucket = storage();
   const { data: info, error: infoError } = await bucket.info(uploadKey);
@@ -65,14 +69,17 @@ export async function inspectAndPromotePanorama(
   const bytes = Buffer.from(await data.arrayBuffer());
   if (bytes.length !== expectedSize)
     throw new DomainError("VALIDATION", "Arquivo incompleto.");
-  const { clean, width, height } = await normalizePanorama(bytes);
+  const plan = kind === "FLOOR_PLAN";
+  const { clean, width, height } = await (plan
+    ? normalizeFloorPlan(bytes)
+    : normalizePanorama(bytes));
   if (clean.length > MAX_PANORAMA_BYTES)
     throw new DomainError(
       "VALIDATION",
       "Imagem otimizada muito grande. Exporte um JPEG menor.",
     );
   const result = await bucket.upload(storageKey, clean, {
-    contentType: "image/jpeg",
+    contentType: plan ? "image/webp" : "image/jpeg",
     upsert: false,
     cacheControl: "300",
   });

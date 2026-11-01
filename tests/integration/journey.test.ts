@@ -17,6 +17,7 @@ import {
 } from "@/features/leads/service";
 import { createBroker } from "@/features/organizations/brokers";
 import { saveCommercial } from "@/features/properties/commercial-service";
+import { simulateFinancing } from "@/features/financing/calc";
 const userId = randomUUID(),
   orgId = randomUUID(),
   otherOrg = randomUUID(),
@@ -28,7 +29,8 @@ let propertyId: string,
   tourId: string,
   slug: string,
   token: string,
-  leadId: string;
+  leadId: string,
+  returnKey: string;
 const contact = {
   name: "Visitante fictício",
   email: "ficticio@example.com",
@@ -135,6 +137,10 @@ it("deduplicates events, rejects forged sessions and scene ids, and only complet
   const lead = await getLead(actor, leadId);
   expect(lead.stage).toBe("TOUR_COMPLETED");
   expect(lead.visits[0].events).toHaveLength(4);
+  expect(lead.interest.reasons.map((r) => r.label)).toContain(
+    "Viu todos os ambientes do tour",
+  );
+  expect((await listLeads(actor))[0].interest).toEqual(lead.interest);
 });
 it("does not record behavioral events without measurement consent", async () => {
   const visit = await beginVisit(
@@ -157,6 +163,10 @@ it("records idempotent visit requests and keeps commercial stage and analytics t
   const lead = await getLead(actor, leadId);
   expect(lead.requests).toHaveLength(1);
   expect(lead.stage).toBe("VISIT_REQUESTED");
+  expect(lead.interest.reasons[0]).toEqual({
+    label: "Pediu visita presencial",
+    points: 35,
+  });
   await updateLead(actor, leadId, {
     stage: "PROPOSAL",
     notes: "Atendimento fictício",
@@ -174,6 +184,190 @@ it("records idempotent visit requests and keeps commercial stage and analytics t
     leads: 0,
     requests: 0,
   });
+});
+it("records financing simulations with a server-computed installment only for measured visits", async () => {
+  await withTenant(actor, "property:update", (tx) =>
+    tx.property.update({
+      where: { id: propertyId },
+      data: { priceCents: BigInt(50_000_000) },
+    }),
+  );
+  const simulation = {
+    downPaymentCents: 10_000_000,
+    termMonths: 360,
+    rateBps: 1150,
+    system: "PRICE" as const,
+  };
+  const visit = await withTenant(actor, "lead:read", (tx) =>
+    tx.tourVisit.findFirstOrThrow({
+      where: { leadId, tracking: true },
+      orderBy: { createdAt: "asc" },
+    }),
+  );
+  let sequence = visit.lastSequence;
+  expect(
+    await recordEvent(token, {
+      sequence: ++sequence,
+      kind: "SIMULATE",
+      simulation,
+    }),
+  ).toBe(true);
+  // A down payment equal to the price is rejected and does not consume the sequence.
+  expect(
+    await recordEvent(token, {
+      sequence: sequence + 1,
+      kind: "SIMULATE",
+      simulation: { ...simulation, downPaymentCents: 50_000_000 },
+    }),
+  ).toBe(false);
+  const lead = await getLead(actor, leadId);
+  const stored = lead.visits.flatMap((v) => v.simulations);
+  expect(stored).toHaveLength(1);
+  expect(Number(stored[0].installmentCents)).toBe(
+    simulateFinancing(50_000_000, simulation)!.firstInstallmentCents,
+  );
+  expect(lead.interest.measured).toBe(true);
+  // Opening a room detail is recorded with the room (scored in lead-score tests).
+  expect(
+    await recordEvent(token, {
+      sequence: ++sequence,
+      kind: "DETAIL",
+      sceneId: sceneA,
+    }),
+  ).toBe(true);
+  expect(
+    (await getLead(actor, leadId)).visits
+      .flatMap((v) => v.events)
+      .filter((e) => e.kind === "DETAIL")
+      .map((e) => e.sceneId),
+  ).toEqual([sceneA]);
+  expect(await analytics(actor, propertyId)).toMatchObject({ simulations: 1 });
+  expect(await analytics(other, propertyId)).toMatchObject({ simulations: 0 });
+  expect(await db.financingSimulation.findMany()).toEqual([]);
+  const [settings] = await db.$queryRaw<
+    { purpose: string; financingRateBps: number }[]
+  >`SELECT * FROM public.get_financing_settings(${slug})`;
+  expect(settings).toMatchObject({ purpose: "SALE", financingRateBps: 1150 });
+});
+it("recognizes a returning e-mail on the same property without overwriting stored contact data", async () => {
+  const before = await getLead(actor, leadId);
+  const visit = await beginVisit(
+    {
+      slug,
+      tourId,
+      tracking: false,
+      contact: {
+        ...contact,
+        name: "Outra Pessoa",
+        email: "FICTICIO@example.com",
+        phone: "(11) 98888-7777",
+      },
+    },
+    hashToken(randomUUID()),
+  );
+  expect(visit.returnKey).toMatch(/^[a-f0-9]{64}$/);
+  returnKey = visit.returnKey!;
+  const leads = await listLeads(actor);
+  expect(leads).toHaveLength(1);
+  const lead = await getLead(actor, leadId);
+  expect(lead.visits).toHaveLength(before.visits.length + 1);
+  expect(lead).toMatchObject({
+    name: contact.name,
+    phone: contact.phone,
+    stage: "WON",
+  });
+  expect(lead.notes).toContain("Contato informado: Outra Pessoa · 11988887777");
+  // Only the hash of the browser key is stored.
+  const devices = await withTenant(actor, "lead:read", (tx) =>
+    tx.leadDevice.findMany({ where: { leadId } }),
+  );
+  expect(devices.map((d) => d.keyHash)).toContain(hashToken(returnKey));
+  expect(JSON.stringify(devices)).not.toContain(returnKey);
+  expect(await db.leadDevice.findMany()).toEqual([]);
+});
+it("resumes visits with the browser key only on the property that issued it", async () => {
+  const before = (await getLead(actor, leadId)).visits.length;
+  const resumed = await beginVisit(
+    { slug, tourId, tracking: true, returnKey },
+    hashToken(randomUUID()),
+  );
+  expect(resumed.returnKey).toBeUndefined();
+  expect(await recordEvent(resumed.token, { sequence: 1, kind: "START" })).toBe(
+    true,
+  );
+  expect((await getLead(actor, leadId)).visits).toHaveLength(before + 1);
+  await expect(
+    beginVisit(
+      { slug, tourId, tracking: true, returnKey: "a".repeat(64) },
+      hashToken(randomUUID()),
+    ),
+  ).rejects.toMatchObject({ code: "NOT_FOUND" });
+  await expect(
+    beginVisit(
+      { slug, tourId, tracking: true, returnKey, contact },
+      hashToken(randomUUID()),
+    ),
+  ).rejects.toThrow();
+  const second = await withTenant(actor, "property:create", async (tx) => {
+    const property = await tx.property.create({
+      data: {
+        organizationId: orgId,
+        title: "Outra casa",
+        slug: randomUUID(),
+        status: "PUBLISHED",
+      },
+    });
+    const tour = await tx.tour.create({
+      data: {
+        organizationId: orgId,
+        propertyId: property.id,
+        title: "Tour",
+        status: "PUBLISHED",
+        published: { scenes: [{ id: randomUUID(), title: "Sala" }] },
+      },
+    });
+    return { slug: property.slug, tourId: tour.id };
+  });
+  await expect(
+    beginVisit(
+      { ...second, tracking: true, returnKey },
+      hashToken(randomUUID()),
+    ),
+  ).rejects.toMatchObject({ code: "NOT_FOUND" });
+});
+it("reopens a lost lead that identifies again and scores the return", async () => {
+  await updateLead(actor, leadId, { stage: "LOST", notes: "" });
+  await beginVisit(
+    { slug, tourId, tracking: false, contact },
+    hashToken(randomUUID()),
+  );
+  const lead = await getLead(actor, leadId);
+  expect(lead.stage).toBe("NEW");
+  expect(lead.notes).toBe("");
+  expect(lead.interest.level).not.toBe("LOST");
+  expect(lead.interest.reasons.map((r) => r.label)).toContainEqual(
+    expect.stringMatching(/^Voltou ao imóvel \(\d+ visitas\)$/),
+  );
+});
+it("reports retention in dry run and removes only expired journey data when applied", async () => {
+  const visits = await withTenant(actor, "lead:read", (tx) =>
+    tx.tourVisit.findMany({ where: { leadId }, orderBy: { createdAt: "asc" } }),
+  );
+  await withTenant(actor, "lead:update", (tx) =>
+    tx.tourVisit.update({
+      where: { id: visits[0].id },
+      data: { createdAt: new Date(Date.now() - 100 * 86400000) },
+    }),
+  );
+  const [dry] = await db.$queryRaw<
+    { visits: bigint }[]
+  >`SELECT * FROM public.purge_journey_data(false)`;
+  expect(Number(dry.visits)).toBeGreaterThanOrEqual(1);
+  expect((await getLead(actor, leadId)).visits).toHaveLength(visits.length);
+  await db.$queryRaw`SELECT * FROM public.purge_journey_data(true)`;
+  const lead = await getLead(actor, leadId);
+  expect(lead.visits).toHaveLength(visits.length - 1);
+  expect(lead.visits.map((v) => v.id)).not.toContain(visits[0].id);
 });
 it("rejects new sessions for unpublished properties and prevents viewer access to lead PII", async () => {
   await withTenant(actor, "property:update", (tx) =>
@@ -259,6 +453,11 @@ it("deletes personal data and related history together without touching another 
   expect(
     await withTenant(actor, "lead:read", (tx) =>
       tx.tourVisit.count({ where: { leadId } }),
+    ),
+  ).toBe(0);
+  expect(
+    await withTenant(actor, "lead:read", (tx) =>
+      tx.leadDevice.count({ where: { leadId } }),
     ),
   ).toBe(0);
 });

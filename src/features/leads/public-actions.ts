@@ -15,7 +15,13 @@ export async function beginVisitAction(input: unknown) {
     .digest("hex");
   try {
     return { success: true as const, ...(await beginVisit(input, abuseKey)) };
-  } catch {
+  } catch (error) {
+    if (error instanceof DomainError && error.code === "NOT_FOUND")
+      return {
+        success: false as const,
+        forget: true as const,
+        error: error.message,
+      };
     return {
       success: false as const,
       error:

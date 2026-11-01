@@ -13,6 +13,22 @@ export const organizationContactSchema = z.object({
     ),
 });
 
+// Annual rate typed as "11,5" or "11.50" and stored in basis points.
+export const financingSettingsSchema = z.object({
+  financingRate: z
+    .string()
+    .trim()
+    .regex(/^\d{1,2}([.,]\d{1,2})?$/, "Use um número como 11,50.")
+    .transform((value) => Math.round(Number(value.replace(",", ".")) * 100))
+    .pipe(
+      z
+        .number()
+        .int()
+        .min(100, "Use uma taxa entre 1% e 40% ao ano.")
+        .max(4000, "Use uma taxa entre 1% e 40% ao ano."),
+    ),
+});
+
 export function whatsappUrl(phone: string, message: string) {
   return /^55[1-9]\d{9,10}$/.test(phone)
     ? `https://wa.me/${phone}?text=${encodeURIComponent(message)}`

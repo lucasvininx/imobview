@@ -13,6 +13,8 @@ As variáveis são configuradas somente no ambiente Production. Não copie todo 
 - `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `SUPABASE_TOUR_BUCKET`: projeto e bucket privado de mídia.
 - `DEMO_PROPERTY_SLUG`: `casa-modelo-tour-360`.
 - `SMTP_ENABLED=false`: recuperação de senha explicitamente indisponível enquanto não houver provedor de e-mail.
+- `CRON_SECRET`: segredo aleatório (32+ caracteres) que a Vercel envia ao cron diário de retenção definido em `vercel.json`.
+- `JOURNEY_RETENTION_ENABLED`: `false` até a política de retenção ser aprovada. Com `false`, o cron apenas conta sessões com mais de 90 dias, leads sem atualização há 365 dias e navegadores reconhecidos sem uso há 365 dias; com `true`, remove esses registros. Simule antes com `npm run ops:cleanup-leads`.
 
 Para habilitar recuperação, configure `SMTP_ENABLED=true`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_FROM`, `SMTP_USER` e `SMTP_PASSWORD`, e faça novo deploy. Valide a entrega antes de usar o fluxo de ativação de clientes.
 
