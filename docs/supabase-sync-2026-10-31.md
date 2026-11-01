@@ -25,11 +25,11 @@ Backup anterior às alterações: `.local/backups/2026-10-31-before-sync`, com d
 - 52 testes unitários, 35 de integração e 15 E2E com Chromium passaram em ambiente local isolado.
 - Lint, TypeScript e build de produção passaram. No Windows, a checagem de estilo usa `npx prettier --check . --end-of-line auto` por causa do checkout CRLF.
 - Auditoria das dependências de produção: zero vulnerabilidades. Política de auditoria completa passou; persistem avisos moderados na cadeia de ferramentas de desenvolvimento.
-- Publicação pela Vercel concluída; o alias `imobview-three.vercel.app` precisa apontar para o deployment de produção atual. O CLI também retorna um alias padrão diferente: conferir ambos antes de encerrar uma publicação futura.
+- Publicação pela Vercel concluída; o alias `imobview-three.vercel.app` foi apontado para o deployment de produção atual. O CLI também retorna um alias padrão diferente: conferir ambos antes de encerrar uma publicação futura.
 - Evidências das verificações reais e do plano aplicado permanecem em `.local/production-smoke-2026-10-31.json` e `.local/migration-plan-2026-10-31.json`.
 
 ## Dependências para liberação comercial
 
 O titular informou que ainda não dispõe de SMTP e identidade comercial. Continuam pendentes: provedor/remetente e DNS de e-mail; dados comerciais e contatos reais; revisão de termos, privacidade e retenção; cópia externa/agendamento de backups e monitor externo com alertas. Não marcar `LEGAL_REVIEWED=true` nem habilitar exclusão por retenção sem a decisão do responsável.
 
-O build nunca aplica migrations. Para alterações futuras no banco, usar `npm run db:migrate` com a conexão administrativa local; `npm run launch:check` lista as pendências. A publicação desta entrega foi feita pelo CLI da Vercel a partir do código local; não houve commit ou push automático.
+O build nunca aplica migrations. Para alterações futuras no banco, usar `npm run db:migrate` com a conexão administrativa local; `npm run launch:check` lista as pendências. A publicação desta entrega foi feita pelo CLI da Vercel a partir do código local. As alterações de código estão registradas no commit `486b788`; estas notas operacionais foram adicionadas depois.
