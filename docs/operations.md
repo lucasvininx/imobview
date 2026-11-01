@@ -2,7 +2,7 @@
 
 ## Ambiente atual
 
-A aplicação roda localmente e usa PostgreSQL e Storage privados no projeto Supabase ImobView. Better Auth gerencia as sessões. O runtime utiliza `imobview_app`, sem superuser ou BYPASSRLS; migrations usam outra role. A aplicação ainda não foi publicada. SMTP local é apenas para desenvolvimento.
+A aplicação está publicada em https://imobview-three.vercel.app e usa PostgreSQL e Storage privados no projeto Supabase ImobView. Better Auth gerencia as sessões. O runtime utiliza `imobview_app`, sem superuser ou BYPASSRLS; migrations usam outra role. SMTP de produção permanece desativado até a configuração de um provedor. Consulte o [registro de sincronização de 31/10/2026](supabase-sync-2026-10-31.md) para contas, backup e validações desta entrega.
 
 Não copie `.env`, backups ou `.local` para o Git. No host da aplicação configure somente os segredos necessários ao runtime. `DIRECT_DATABASE_URL`, chave de backup e arquivos de clientes pertencem ao ambiente administrativo. TLS do PostgreSQL deve validar o certificado; adapte `sslrootcert` para um caminho existente no host, sem desativar a validação.
 
