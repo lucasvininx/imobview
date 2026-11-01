@@ -4,6 +4,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { hashPassword } from "better-auth/crypto";
 import { z } from "zod";
 import { Pool } from "pg";
+import { databasePoolConfig } from "../src/config/database-pool.mjs";
 
 // Assisted onboarding deliberately has no public administrator endpoint.
 const schema = z.object({
@@ -30,7 +31,12 @@ try {
       "Dados válidos. Use --apply para criar a conta e a organização. Nenhuma senha ou mensagem será enviada.\n",
     );
   } else {
-    pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    pool = new Pool(
+      databasePoolConfig(
+        process.env.DATABASE_URL,
+        process.env.DATABASE_CA_CERT,
+      ),
+    );
     const client = await pool.connect();
     try {
       await client.query("BEGIN");

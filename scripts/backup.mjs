@@ -1,11 +1,14 @@
 import "dotenv/config";
 import { join } from "node:path";
 import { Pool } from "pg";
+import { databasePoolConfig } from "../src/config/database-pool.mjs";
 import { createClient } from "@supabase/supabase-js";
 import { backupFolder, pgTool, writeEncrypted, key } from "./ops-lib.mjs";
 key();
 const connection = process.env.DIRECT_DATABASE_URL;
-const pool = new Pool({ connectionString: connection });
+const pool = new Pool(
+  databasePoolConfig(connection, process.env.DATABASE_CA_CERT),
+);
 const snapshotClient = await pool.connect();
 try {
   await snapshotClient.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");

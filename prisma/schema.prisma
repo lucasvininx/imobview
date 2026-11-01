@@ -223,6 +223,7 @@ model TourVisit {
   propertyId String @db.Uuid
   property Property @relation(fields: [propertyId, organizationId], references: [id, organizationId], onDelete: Cascade)
   tourId String @db.Uuid
+  tour Tour @relation(fields: [tourId, organizationId], references: [id, organizationId], onDelete: Cascade, onUpdate: NoAction, map: "visit_tour_tenant")
   leadId String? @db.Uuid
   lead Lead? @relation(fields: [leadId, organizationId], references: [id, organizationId], onDelete: Cascade)
   tokenHash String @unique @db.VarChar(64)
@@ -292,7 +293,7 @@ model PropertyPhoto {
   id String @id @default(uuid()) @db.Uuid
   organizationId String @db.Uuid
   propertyId String @db.Uuid
-  property Property @relation(fields: [propertyId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  property Property @relation(fields: [propertyId, organizationId], references: [id, organizationId], onDelete: Cascade, onUpdate: NoAction)
   storageKey String @unique
   uploadKey String @unique
   fileName String @db.VarChar(160)
@@ -324,6 +325,7 @@ model Tour {
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
   assets PanoramaAsset[]
+  visits TourVisit[]
   @@unique([id, organizationId])
   @@index([organizationId, propertyId, createdAt])
 }

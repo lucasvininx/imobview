@@ -1,7 +1,10 @@
 import "dotenv/config";
 import { Pool } from "pg";
+import { databasePoolConfig } from "../src/config/database-pool.mjs";
 // Same policy as /api/cron/retention: public.purge_journey_data is the single source of retention windows.
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const pool = new Pool(
+  databasePoolConfig(process.env.DATABASE_URL, process.env.DATABASE_CA_CERT),
+);
 const apply = process.argv.includes("--apply");
 try {
   const {

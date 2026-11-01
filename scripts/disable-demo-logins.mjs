@@ -1,6 +1,9 @@
 import "dotenv/config";
 import { Pool } from "pg";
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+import { databasePoolConfig } from "../src/config/database-pool.mjs";
+const pool = new Pool(
+  databasePoolConfig(process.env.DATABASE_URL, process.env.DATABASE_CA_CERT),
+);
 try {
   const { rows } = await pool.query(
     "SELECT id FROM \"User\" WHERE email LIKE '%@imobview.test'",

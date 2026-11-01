@@ -1,7 +1,13 @@
 import "dotenv/config";
 import { Pool } from "pg";
+import { databasePoolConfig } from "../src/config/database-pool.mjs";
 import { createClient } from "@supabase/supabase-js";
-const pool = new Pool({ connectionString: process.env.DIRECT_DATABASE_URL });
+const pool = new Pool(
+  databasePoolConfig(
+    process.env.DIRECT_DATABASE_URL,
+    process.env.DATABASE_CA_CERT,
+  ),
+);
 const apply = process.argv.includes("--apply");
 try {
   const storage = createClient(
