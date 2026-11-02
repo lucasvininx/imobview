@@ -24,10 +24,12 @@ export default function Page() {
         </p>
         <h2>Demonstração e navegação</h2>
         <p>
-          Os imóveis demonstrativos são fictícios. Você pode visitar os tours
-          sem se identificar. Se solicitar atendimento, seu nome, e-mail e
-          telefone ficam disponíveis para a imobiliária responsável pelo imóvel.
-          Não solicitamos CPF.
+          Os imóveis demonstrativos são fictícios e a demonstração pode ser
+          explorada sem cadastro. Nos links públicos de imóveis, o cadastro com
+          nome, e-mail e telefone é necessário antes de liberar o tour. Esses
+          dados ficam disponíveis para a imobiliária responsável, mesmo sem
+          concluir o tour ou solicitar uma visita presencial. Não solicitamos
+          CPF.
         </p>
         <p>
           A medição de comportamento é opcional e começa apenas após sua

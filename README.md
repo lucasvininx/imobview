@@ -18,8 +18,9 @@ Plataforma brasileira para organizar e apresentar imóveis. Este é o código-ba
 - Vista 3D externa do condomínio: maquete gerada a partir de torres, andares, posição do apartamento e lazer, com controle tipo drone, sol e sombras reais por data e horário e horas de sol direto na fachada. A página pública recebe só coordenadas arredondadas.
 - Pontos de informação ("i") nos ambientes do tour: a imobiliária destaca acabamentos e itens; cada detalhe aberto conta na nota de interesse.
 - Simulador de financiamento (SAC/Price) nos imóveis à venda, com taxa inicial configurável por imobiliária. Com medição autorizada, entrada, prazo e parcela aparecem na ficha do lead e contam na nota de interesse.
+- Sino de notificações por usuário, cadastro obrigatório antes do tour público e atribuição de leads por responsável, rodízio ou desempenho. Avisos automáticos de visita por WhatsApp com fila e tentativas de reenvio; exigem configurar a integração Meta. [Configuração e regras](docs/notificacoes-distribuicao.md).
 
-Vídeos, analytics, convites, cobrança, autosave e onboarding comercial ainda não estão implementados. A página de contato é informativa; não há formulário que finja enviar mensagens.
+Vídeos, convites, cobrança, autosave e onboarding comercial ainda não estão implementados. A página de contato é informativa; não há formulário que finja enviar mensagens.
 
 ## Stack e requisitos
 

@@ -40,7 +40,7 @@ export default async function Page({
   const property = await getProperty(slug);
   if (!property) notFound();
   const [tours, exterior] = await Promise.all([
-    publicTours(slug),
+    publicTours(slug, true),
     publicExterior(slug),
   ]);
   return (

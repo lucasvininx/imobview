@@ -9,7 +9,7 @@ export const stageLabels = {
   VISIT_REQUESTED: "Visita solicitada",
   NEGOTIATION: "Negociação",
   PROPOSAL: "Proposta",
-  WON: "Venda",
+  WON: "Venda / locação fechada",
   LOST: "Perdido",
 } as const;
 export const stageSchema = z.enum([
@@ -54,8 +54,8 @@ export const startVisitSchema = z
     website: z.string().max(0).default(""),
   })
   .refine(
-    (v) => v.tracking || !!v.contact || !!v.returnKey,
-    "Escolha o que deseja compartilhar.",
+    (v) => !!v.contact || !!v.returnKey,
+    "Preencha seu cadastro antes de acessar o tour.",
   )
   .refine(
     (v) => !(v.contact && v.returnKey),

@@ -4,6 +4,11 @@ import { createHmac } from "node:crypto";
 import { readEnv } from "@/config/env";
 import { beginVisit, requestVisit } from "./public-service";
 import { DomainError } from "@/domain/errors";
+import { identifiedTour } from "@/features/tours/presentation";
+import { hashToken } from "./public-service";
+import { deliverWhatsApp } from "@/features/notifications/whatsapp";
+import { after } from "next/server";
+import { logError } from "@/server/logger";
 export async function beginVisitAction(input: unknown) {
   const h = await headers();
   // Vercel supplies this header; locally use one shared bucket instead of trusting arbitrary forwarding headers.
@@ -14,7 +19,10 @@ export async function beginVisitAction(input: unknown) {
     .update(`${new Date().toISOString().slice(0, 10)}:${address}`)
     .digest("hex");
   try {
-    return { success: true as const, ...(await beginVisit(input, abuseKey)) };
+    const visit = await beginVisit(input, abuseKey);
+    const tour = await identifiedTour(hashToken(visit.token));
+    if (!tour) throw new Error("TourUnavailable");
+    return { success: true as const, ...visit, tour };
   } catch (error) {
     if (error instanceof DomainError && error.code === "NOT_FOUND")
       return {
@@ -25,13 +33,20 @@ export async function beginVisitAction(input: unknown) {
     return {
       success: false as const,
       error:
-        "Não foi possível registrar agora. Confira os dados ou continue sem se identificar.",
+        "Não foi possível registrar agora. Confira os dados e tente novamente para liberar o tour.",
     };
   }
 }
 export async function requestVisitAction(token: unknown, input: unknown) {
   try {
     await requestVisit(token, input);
+    after(async () => {
+      try {
+        await deliverWhatsApp(hashToken(String(token)));
+      } catch (error) {
+        logError("whatsapp.dispatch.failed", error);
+      }
+    });
     return { success: true as const };
   } catch (error) {
     return {

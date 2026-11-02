@@ -31,6 +31,13 @@ it("requires explicit contact consent and strips unknown personal fields", () =>
       tracking: false,
     }).success,
   ).toBe(false);
+  expect(
+    startVisitSchema.safeParse({
+      slug: "casa",
+      tourId: randomUUID(),
+      tracking: true,
+    }).success,
+  ).toBe(false);
 });
 it("bounds client timing and removes referrer query strings", () => {
   expect(

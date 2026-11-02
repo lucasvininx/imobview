@@ -18,6 +18,7 @@ model User {
   sessions Session[]
   accounts Account[]
   memberships OrganizationMember[]
+  notifications Notification[]
 }
 
 model Session {
@@ -86,6 +87,8 @@ model Organization {
   maxStorageBytes BigInt @default(2147483648)
   maxPanoramas Int @default(300)
   financingRateBps Int @default(1150)
+  leadDistribution String @default("PROPERTY") @db.VarChar(20)
+  whatsappVisitAlerts Boolean @default(false)
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
   members OrganizationMember[]
@@ -149,7 +152,7 @@ model Property {
   condominium String @default("") @db.VarChar(160)
   suites Int @default(0)
   commercialNotes String @default("") @db.VarChar(2000)
-  captureLeads Boolean @default(false)
+  captureLeads Boolean @default(true)
   exterior Json?
   brokerId String? @db.Uuid
   broker Broker? @relation(fields: [brokerId, organizationId], references: [id, organizationId], onDelete: NoAction)
@@ -175,6 +178,9 @@ model Broker {
   active Boolean @default(true)
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   properties Property[]
+  lastLeadAt DateTime? @db.Timestamptz(3)
+  leadCredit Int @default(0)
+  leads Lead[]
   @@unique([id, organizationId])
   @@index([organizationId, active])
 }
@@ -184,6 +190,9 @@ model Lead {
   organizationId String @db.Uuid
   propertyId String @db.Uuid
   property Property @relation(fields: [propertyId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  brokerId String? @db.Uuid
+  broker Broker? @relation(fields: [brokerId, organizationId], references: [id, organizationId], onDelete: NoAction)
+  notifications Notification[]
   name String @db.VarChar(160)
   email String @db.VarChar(254)
   phone String @db.VarChar(15)
@@ -204,6 +213,39 @@ model Lead {
   @@index([organizationId, updatedAt])
   @@index([organizationId, propertyId, stage])
   @@index([organizationId, propertyId, email])
+  @@index([organizationId, brokerId, wonAt])
+}
+
+model Notification {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  leadId String @db.Uuid
+  lead Lead @relation(fields: [leadId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  kind String @db.VarChar(30)
+  title String @db.VarChar(160)
+  message String @db.VarChar(500)
+  readAt DateTime? @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@index([organizationId, userId, readAt, createdAt])
+}
+
+model WhatsAppDelivery {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  requestId String @db.Uuid
+  request VisitRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  kind String @db.VarChar(30)
+  phone String @db.VarChar(15)
+  attempts Int @default(0)
+  availableAt DateTime @default(now()) @db.Timestamptz(3)
+  lease String? @db.Uuid
+  sentAt DateTime? @db.Timestamptz(3)
+  lastError String? @db.VarChar(80)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@unique([requestId, kind])
+  @@index([sentAt, availableAt])
 }
 
 model LeadDevice {
@@ -285,6 +327,7 @@ model VisitRequest {
   status String @default("REQUESTED") @db.VarChar(15)
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  deliveries WhatsAppDelivery[]
   @@unique([leadId, preferredDate, period])
   @@index([organizationId, status, preferredDate])
 }

@@ -38,54 +38,47 @@ function writeSaved(storageKey: string, value: Saved | null) {
 export function PublicJourney({
   slug,
   tour,
-  capture,
 }: {
   slug: string;
-  capture: boolean;
   tour: TourView;
 }) {
-  const [gate, setGate] = useState(capture),
-    [form, setForm] = useState(capture),
-    [token, setToken] = useState<string | null>(null);
-  const [identified, setIdentified] = useState(false),
-    [tracking, setTracking] = useState(false),
+  const [unlocked, setUnlocked] = useState<TourView | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [tracking, setTracking] = useState(false),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [requested, setRequested] = useState(false);
-  const journey = useJourney(token, tracking, tour.scenes.length);
+  const journey = useJourney(token, tracking, unlocked?.scenes.length ?? 0);
   const storageKey = `imobview.visitor.${slug}`;
   const hydrated = useHydrated();
   const [forgotten, setForgotten] = useState(false);
-  const saved =
-    capture && hydrated && !forgotten ? readSaved(storageKey) : null;
+  const saved = hydrated && !forgotten ? readSaved(storageKey) : null;
   function forget() {
     writeSaved(storageKey, null);
     setForgotten(true);
     setError("");
   }
-  async function begin(data: FormData | null, returnKey?: string) {
+  async function begin(data: FormData, returnKey?: string) {
     setBusy(true);
     setError("");
     try {
-      const measure = data ? data.get("tracking") === "on" : true;
+      const measure = data.get("tracking") === "on";
       const result = await beginVisitAction({
         slug,
         tourId: tour.id,
         tracking: measure,
         source: sourceFromLocation(location.search, document.referrer),
-        website: data?.get("website") ?? "",
+        website: data.get("website") ?? "",
         ...(returnKey
           ? { returnKey }
-          : data
-            ? {
-                contact: {
-                  name: data.get("name"),
-                  email: data.get("email"),
-                  phone: data.get("phone"),
-                  consent: data.get("consent") === "on",
-                },
-              }
-            : {}),
+          : {
+              contact: {
+                name: data.get("name"),
+                email: data.get("email"),
+                phone: data.get("phone"),
+                consent: data.get("consent") === "on",
+              },
+            }),
       });
       if (!result.success) {
         if ("forget" in result) forget();
@@ -97,20 +90,16 @@ export function PublicJourney({
       journey.stop();
       setToken(result.token);
       setTracking(measure);
-      setIdentified(!!data);
-      setGate(false);
-      setForm(false);
+      setUnlocked(result.tour);
     } catch {
-      setError(
-        "Conexão indisponível. Tente novamente ou continue sem informar dados.",
-      );
+      setError("Conexão indisponível. Tente novamente para liberar o tour.");
     } finally {
       setBusy(false);
     }
   }
   return (
     <div className="journey">
-      {form && saved && (
+      {!unlocked && saved && (
         <form
           className="form-card"
           onSubmit={(e) => {
@@ -145,22 +134,10 @@ export function PublicJourney({
             >
               Não sou eu
             </Button>
-            <Button
-              type="button"
-              variant="quiet"
-              disabled={busy}
-              onClick={() => {
-                setGate(false);
-                setForm(false);
-                setError("");
-              }}
-            >
-              Continuar sem me identificar
-            </Button>
           </div>
         </form>
       )}
-      {form && !saved && (
+      {!unlocked && !saved && (
         <form
           className="form-card"
           onSubmit={(e) => {
@@ -168,10 +145,11 @@ export function PublicJourney({
             void begin(new FormData(e.currentTarget));
           }}
         >
-          <h3>Conheça o imóvel. Converse com quem pode ajudar.</h3>
+          <h3>Cadastre-se para conhecer o imóvel</h3>
           <p>
-            Deixe seu contato para a imobiliária responsável responder sobre
-            este imóvel. Você também pode visitar sem se identificar.
+            Preencha seus dados para liberar o tour 360°. Seu cadastro ficará
+            disponível para a imobiliária mesmo sem agendar uma visita
+            presencial.
           </p>
           <div className="form-grid">
             <label className="field">
@@ -228,55 +206,30 @@ export function PublicJourney({
             <Button disabled={busy}>
               {busy ? "Registrando…" : "Identificar e continuar"}
             </Button>
-            <Button
-              type="button"
-              variant="quiet"
-              disabled={busy}
-              onClick={() => {
-                setGate(false);
-                setForm(false);
-                setError("");
-              }}
-            >
-              Continuar sem informar dados
-            </Button>
           </div>
         </form>
       )}
-      {!gate && (
+      {unlocked && (
         <TourViewer
           key={token ?? "anonymous"}
-          scenes={tour.scenes}
-          floorPlans={tour.floorPlans}
-          initialSceneId={tour.initialSceneId}
+          scenes={unlocked.scenes}
+          floorPlans={unlocked.floorPlans}
+          initialSceneId={unlocked.initialSceneId}
           onSceneChange={journey.sceneChanged}
           onHotspot={journey.hotspot}
           onInfo={journey.detail}
         />
       )}
-      {!form && (
+      {unlocked && (
         <div className="journey-controls">
-          {!identified && (
-            <Button variant="secondary" onClick={() => setForm(true)}>
-              Solicitar contato ou visita
-            </Button>
-          )}
-          {!tracking ? (
-            !identified && (
-              <Button
-                variant="quiet"
-                disabled={busy}
-                onClick={() => void begin(null)}
-              >
-                Permitir medição da visita
-              </Button>
-            )
-          ) : (
+          {tracking && (
             <Button
               variant="quiet"
               onClick={() => {
                 journey.stop();
                 setTracking(false);
+                if (saved)
+                  writeSaved(storageKey, { ...saved, tracking: false });
               }}
             >
               Parar medição
@@ -285,11 +238,11 @@ export function PublicJourney({
           <p className="muted">
             {tracking
               ? "Medição ativa: ambientes, tempo com a página visível, cliques e simulações de financiamento. Conclusão significa que todos os ambientes foram abertos."
-              : "Navegação sem medição. Seus dados só serão enviados se você escolher compartilhar."}
+              : "Navegação sem medição comportamental. Seu cadastro continua disponível para atendimento."}
           </p>
         </div>
       )}
-      {identified && (
+      {unlocked && (
         <form
           className="form-card"
           onSubmit={async (e) => {

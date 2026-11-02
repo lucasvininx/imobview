@@ -10,6 +10,7 @@
   --border: #26312d;
   --radius: 12px;
 }
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -2431,5 +2432,182 @@ svg {
   .exterior-views button {
     padding: 5px 9px;
     font-size: 11px;
+  }
+}
+
+/* Workspace typography and notifications */
+.app-layout {
+  font-size: 16px;
+  line-height: 1.6;
+  --muted: #b4c1ba;
+}
+.app-layout
+  :is(
+    .app-nav a,
+    .workspace-name,
+    .app-topbar,
+    .page-heading p,
+    .stat-top,
+    .dashboard-banner p,
+    .property-card p,
+    .property-details,
+    .search-input,
+    .member-list li,
+    .field,
+    .field input,
+    .field select,
+    .field textarea,
+    .button,
+    .form-card p,
+    .check-field,
+    table
+  ) {
+  font-size: 16px;
+}
+.app-layout
+  :is(
+    .workspace-name small,
+    .sidebar-bottom,
+    .stat-note,
+    .page-heading .eyebrow,
+    .subheading a,
+    .badge,
+    .form-actions > span,
+    .wizard-steps li,
+    .review-grid dt,
+    .review-note,
+    .field small,
+    .muted
+  ) {
+  font-size: 14px;
+}
+.app-layout :is(.property-card h3, .property-card-bottom, .review-grid dd) {
+  font-size: 18px;
+}
+.app-layout .property-details {
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.app-layout .filter-form {
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+.app-layout .form-actions {
+  flex-wrap: wrap;
+}
+.app-layout .app-topbar {
+  height: auto;
+  min-height: 76px;
+  padding-block: 12px;
+  gap: 16px;
+}
+.app-layout .app-topbar > span {
+  font-size: 12px;
+}
+.app-layout .app-topbar > div {
+  min-width: 0;
+}
+.app-layout .app-topbar > div > span:first-of-type {
+  overflow-wrap: anywhere;
+}
+.app-layout .form-card {
+  line-height: 1.65;
+}
+.notification-root {
+  position: relative;
+}
+.notification-toggle {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--foreground);
+  background: var(--surface);
+}
+.notification-toggle:hover {
+  background: var(--surface-raised);
+}
+.notification-count {
+  position: absolute;
+  top: -6px;
+  right: -7px;
+  min-width: 22px;
+  padding: 1px 5px;
+  border-radius: 20px;
+  background: #10b981;
+  color: #06150f;
+  font-size: 12px;
+  font-weight: 800;
+}
+.notification-panel {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  z-index: 100;
+  width: min(420px, calc(100vw - 32px));
+  max-height: min(70vh, 650px);
+  overflow-y: auto;
+  padding: 18px;
+  background: var(--surface);
+  color: var(--foreground);
+  border: 1px solid #42564b;
+  border-radius: 14px;
+  box-shadow: 0 16px 60px #0009;
+  font-size: 16px;
+}
+.notification-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.notification-heading h2 {
+  font-size: 22px;
+  margin: 0;
+}
+.notification-panel ul {
+  list-style: none;
+  padding: 0;
+}
+.notification-panel li {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  border-radius: 8px;
+  overflow-wrap: anywhere;
+}
+.notification-panel li a {
+  display: grid;
+  gap: 6px;
+}
+.notification-panel time {
+  font-size: 14px;
+  color: var(--muted);
+}
+.notification-unread {
+  background: #123b2c;
+  border-left: 3px solid var(--green);
+}
+@media (min-width: 601px) and (max-width: 1000px) {
+  .app-layout .sidebar-bottom .button {
+    font-size: 0;
+  }
+}
+@media (max-width: 600px) {
+  .notification-panel {
+    position: fixed;
+    top: 82px;
+    right: 16px;
+  }
+  .app-layout .app-topbar > div {
+    gap: 10px;
+  }
+  .app-layout .app-content {
+    padding-inline: 18px;
+  }
+  .app-layout .form-card {
+    padding: 20px;
   }
 }

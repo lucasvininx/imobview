@@ -169,6 +169,11 @@ test("360 tour uploads, connects rooms, publishes and isolates drafts", async ({
     fullPage: true,
   });
   await page.goto(`/v/${property.slug}`);
+  await page.getByLabel("Nome e sobrenome").fill("Visitante do tour");
+  await page.getByLabel("E-mail", { exact: true }).fill("tour-e2e@example.com");
+  await page.getByLabel("Telefone / WhatsApp").fill("11999999999");
+  await page.getByLabel(/Quero receber contato/).check();
+  await page.getByRole("button", { name: "Identificar e continuar" }).click();
   const viewer = page
     .getByRole("region", { name: "Tour virtual 360 graus" })
     .last();

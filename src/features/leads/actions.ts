@@ -3,6 +3,9 @@ import { revalidatePath } from "next/cache";
 import { requireWorkspace } from "@/server/session";
 import { updateLead, deleteLead, updateRequest } from "./service";
 import { DomainError } from "@/domain/errors";
+import { after } from "next/server";
+import { deliverWhatsApp } from "@/features/notifications/whatsapp";
+import { logError } from "@/server/logger";
 export async function leadAction(id: string, input: unknown) {
   const { actor } = await requireWorkspace();
   try {
@@ -38,6 +41,13 @@ export async function requestStatusAction(id: string, status: string) {
   const { actor } = await requireWorkspace();
   try {
     await updateRequest(actor, id, status);
+    after(async () => {
+      try {
+        await deliverWhatsApp();
+      } catch (error) {
+        logError("whatsapp.dispatch.failed", error);
+      }
+    });
     revalidatePath("/app", "layout");
     return { success: true as const };
   } catch {

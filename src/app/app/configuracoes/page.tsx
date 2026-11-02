@@ -7,6 +7,8 @@ import { FinancingForm } from "@/features/organizations/financing-form";
 import { can } from "@/domain/permissions";
 import { withTenant } from "@/server/tenant";
 import { organizationUsage } from "@/domain/entitlements";
+import { DistributionForm } from "@/features/organizations/distribution-form";
+import { whatsappConfigured } from "@/features/notifications/whatsapp";
 export default async function Page() {
   const { actor, membership, memberships, user } = await requireWorkspace();
   const usage = await withTenant(actor, "property:read", (tx) =>
@@ -23,6 +25,11 @@ export default async function Page() {
           <>
             <ContactForm organization={usage.organization} />
             <FinancingForm rateBps={usage.organization.financingRateBps} />
+            <DistributionForm
+              mode={usage.organization.leadDistribution}
+              alerts={usage.organization.whatsappVisitAlerts}
+              whatsappReady={whatsappConfigured()}
+            />
           </>
         )}
         <section aria-label="Uso da organização">

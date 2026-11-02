@@ -14,6 +14,6 @@ export const commercialSchema = z.object({
   condominium: z.string().trim().max(160),
   suites: z.coerce.number().int().min(0).max(100),
   commercialNotes: z.string().trim().max(2000),
-  captureLeads: z.boolean(),
+  captureLeads: z.boolean().transform(() => true),
   brokerId: z.union([z.uuid(), z.literal("")]).transform((v) => v || null),
 });

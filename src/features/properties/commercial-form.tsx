@@ -33,7 +33,7 @@ export function CommercialForm({
         try {
           const result = await saveCommercialAction(property.id, {
             ...Object.fromEntries(data),
-            captureLeads: data.get("captureLeads") === "on",
+            captureLeads: true,
           });
           setMessage(
             result.success ? "Dados comerciais atualizados." : result.error,
@@ -117,15 +117,11 @@ export function CommercialForm({
           />
         </label>
       </div>
-      <label className="check-field">
-        <input
-          name="captureLeads"
-          type="checkbox"
-          defaultChecked={property.captureLeads}
-        />
-        Apresentar formulário de contato antes do tour, permitindo continuar sem
-        identificação.
-      </label>
+      <p>
+        O cadastro do visitante é obrigatório antes de liberar o tour público. O
+        lead e seu histórico ficam disponíveis mesmo sem solicitar uma visita
+        presencial.
+      </p>
       <Button disabled={busy}>Salvar dados comerciais</Button>
       {message && <p role="status">{message}</p>}
     </form>

@@ -72,11 +72,17 @@ test("visitor controls measurement, creates a lead, explores rooms and requests 
     }
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(`/v/${slug}`);
-    await page
-      .getByRole("button", { name: "Continuar sem informar dados" })
-      .click();
-    await page.getByRole("button", { name: "Iniciar tour 360°" }).click();
-    await expect(page.locator(".psv-canvas-container canvas")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Cadastre-se para conhecer o imóvel" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Continuar sem informar dados" }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: "Iniciar tour 360°" }),
+    ).toHaveCount(0);
+    await expect(page.locator(".psv-canvas-container canvas")).toHaveCount(0);
+    expect(await page.content()).not.toContain("/object/sign/imobview-tours/");
     expect(
       (
         await pool.query(
@@ -198,7 +204,42 @@ test("visitor controls measurement, creates a lead, explores rooms and requests 
       .fill(process.env.SEED_PASSWORD!);
     await page.getByRole("button", { name: "Entrar na plataforma" }).click();
     await expect(page).toHaveURL(/\/app$/);
+    const bell = page.getByRole("button", {
+      name: /Notificações: \d+ não lidas/,
+    });
+    await bell.click();
+    const notificationPanel = page.getByRole("region", {
+      name: "Notificações",
+      exact: true,
+    });
+    await expect(
+      notificationPanel
+        .getByText("Nova solicitação de visita", { exact: true })
+        .first(),
+    ).toBeVisible();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await page.screenshot({
+      path: "test-results/notifications-mobile.png",
+      fullPage: true,
+    });
+    await notificationPanel
+      .getByRole("button", { name: "Marcar todas como lidas" })
+      .click();
+    await expect(bell).toHaveAccessibleName("Notificações: 0 não lidas");
+    await notificationPanel
+      .getByRole("button", { name: "Fechar notificações" })
+      .click();
     await page.goto(`/app/leads/${leadId}`);
+    expect(
+      await page
+        .locator(".app-content .form-card p")
+        .first()
+        .evaluate((el) => getComputedStyle(el).fontSize),
+    ).toBe("16px");
     await expect(
       page.getByRole("heading", { name: "Pessoa Jornada E2E", exact: true }),
     ).toBeVisible();

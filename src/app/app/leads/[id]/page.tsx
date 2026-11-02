@@ -15,6 +15,7 @@ import {
   systemLabels,
 } from "@/features/financing/calc";
 import { money } from "@/lib/format";
+import { listBrokers } from "@/features/organizations/brokers";
 export default async function Page({
   params,
 }: {
@@ -28,6 +29,7 @@ export default async function Page({
     if (error instanceof DomainError) notFound();
     throw error;
   });
+  const brokers = await listBrokers(actor);
   return (
     <>
       <PageHeader title={lead.name} description={lead.property.title} />
@@ -39,7 +41,7 @@ export default async function Page({
         </p>
         <p>
           Origem: {lead.source} · Corretor:{" "}
-          {lead.property.broker?.name ?? "Ainda não atribuído"}
+          {lead.broker?.name ?? "Ainda não atribuído"}
         </p>
         <p>
           Recebido em{" "}
@@ -58,6 +60,8 @@ export default async function Page({
         stage={lead.stage}
         notes={lead.notes}
         canDelete={can(membership.role, "organization:manage")}
+        brokerId={lead.brokerId}
+        brokers={brokers}
       />
       <h2>Comportamento no tour</h2>
       <p className="muted">

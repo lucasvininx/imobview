@@ -42,7 +42,7 @@ const publicTourSchema = z.object({
   document: tourDocumentSchema,
   assets: z.array(z.object({ id: z.uuid(), storageKey: z.string() })),
 });
-export async function publicTours(slug: string) {
+export async function publicTours(slug: string, preview = false) {
   if (!/^[a-z0-9-]{1,220}$/.test(slug)) return [];
   const rows = await db.$queryRaw<
     unknown[]
@@ -54,8 +54,24 @@ export async function publicTours(slug: string) {
         id: tour.id,
         title: tour.title,
         initialSceneId: tour.document.initialSceneId,
-        ...(await tourMedia(tour.document, tour.assets)),
+        ...(preview
+          ? { scenes: [], floorPlans: [] }
+          : await tourMedia(tour.document, tour.assets)),
       };
     }),
   );
+}
+
+export async function identifiedTour(tokenHash: string) {
+  const rows = await db.$queryRaw<
+    unknown[]
+  >`SELECT * FROM public.get_identified_tour(${tokenHash})`;
+  if (!rows.length) return null;
+  const tour = publicTourSchema.parse(rows[0]);
+  return {
+    id: tour.id,
+    title: tour.title,
+    initialSceneId: tour.document.initialSceneId,
+    ...(await tourMedia(tour.document, tour.assets)),
+  };
 }

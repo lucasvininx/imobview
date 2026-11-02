@@ -80,8 +80,8 @@ export default async function Page({
       </form>
       {!leads.length ? (
         <p className="notice">
-          Nenhum lead nesta seleção. Ative a captura no imóvel e compartilhe a
-          página publicada.
+          Nenhum lead nesta seleção. Compartilhe a página publicada do imóvel
+          para receber novos cadastros.
         </p>
       ) : (
         <div className="lead-grid">
@@ -97,6 +97,7 @@ export default async function Page({
                 <Link href={`/app/leads/${lead.id}`}>{lead.name}</Link>
               </h2>
               <p>{lead.property.title}</p>
+              <p>Corretor: {lead.broker?.name ?? "Ainda não atribuído"}</p>
               <p>
                 Origem: {lead.source} ·{" "}
                 {new Date(lead.createdAt).toLocaleDateString("pt-BR", {

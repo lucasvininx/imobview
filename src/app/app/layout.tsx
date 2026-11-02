@@ -2,6 +2,9 @@ import { Brand } from "@/components/brand";
 import { AppNavigation } from "@/components/app-navigation";
 import { LogoutButton } from "@/features/auth/logout-button";
 import { requireWorkspace } from "@/server/session";
+import { can } from "@/domain/permissions";
+import { NotificationBell } from "@/features/notifications/bell";
+import { listNotifications } from "@/features/notifications/service";
 export const metadata = {
   title: "Sua plataforma",
   robots: { index: false, follow: false },
@@ -12,7 +15,10 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, membership } = await requireWorkspace();
+  const { actor, user, membership } = await requireWorkspace();
+  const notifications = can(membership.role, "lead:read")
+    ? await listNotifications(actor)
+    : null;
   return (
     <div className="app-layout">
       <aside className="sidebar">
@@ -38,6 +44,13 @@ export default async function AppLayout({
             <Brand />
           </div>
           <div>
+            {notifications && (
+              <NotificationBell
+                key={actor.organizationId}
+                workspaceId={actor.organizationId}
+                initial={notifications}
+              />
+            )}
             <span>{user.name}</span>
             <span className="avatar" aria-hidden="true">
               {user.name.slice(0, 2).toUpperCase()}

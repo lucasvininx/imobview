@@ -105,6 +105,7 @@ export function listLeads(actor: Actor, propertyId?: string, stage?: string) {
       },
       include: {
         property: { select: { title: true } },
+        broker: { select: { name: true } },
         _count: { select: { requests: true } },
       },
       // Returning visitors bump updatedAt, so old leads with new activity stay in the window.
@@ -130,6 +131,7 @@ export function getLead(actor: Actor, id: string) {
     const lead = await tx.lead.findFirst({
       where: { id, organizationId: actor.organizationId },
       include: {
+        broker: { select: { name: true } },
         property: {
           select: { title: true, broker: { select: { name: true } } },
         },
@@ -160,13 +162,35 @@ export function getLead(actor: Actor, id: string) {
 export function updateLead(actor: Actor, id: string, input: unknown) {
   idSchema.parse(id);
   const data = z
-    .object({ stage: stageSchema, notes: z.string().trim().max(5000) })
+    .object({
+      stage: stageSchema,
+      notes: z.string().trim().max(5000),
+      brokerId: z
+        .union([z.uuid(), z.literal("")])
+        .transform((value) => value || null)
+        .optional(),
+    })
     .parse(input);
   return withTenant(actor, "lead:update", async (tx) => {
     const existing = await tx.lead.findFirst({
       where: { id, organizationId: actor.organizationId },
     });
     if (!existing) throw new DomainError("NOT_FOUND", "Lead não encontrado.");
+    if (
+      data.brokerId &&
+      data.brokerId !== existing.brokerId &&
+      !(await tx.broker.findFirst({
+        where: {
+          id: data.brokerId,
+          organizationId: actor.organizationId,
+          active: true,
+        },
+      }))
+    )
+      throw new DomainError(
+        "VALIDATION",
+        "Escolha um corretor ativo desta imobiliária.",
+      );
     return tx.lead.update({
       where: {
         id_organizationId: { id, organizationId: actor.organizationId },

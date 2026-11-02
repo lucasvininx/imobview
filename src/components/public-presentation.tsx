@@ -12,6 +12,7 @@ import type { TourView } from "@/features/tours/viewer-types";
 import { FinancingSimulator } from "@/features/financing/simulator";
 import { ExteriorViewer } from "@/features/exterior/viewer";
 import type { ExteriorConfig } from "@/features/exterior/schema";
+import { TourViewer } from "@/features/tours/viewer";
 export function PublicPresentation({
   property,
   demo = false,
@@ -39,11 +40,15 @@ export function PublicPresentation({
         {tours.map((tour) => (
           <section key={tour.id} aria-label={tour.title}>
             <h2>{tour.title}</h2>
-            <PublicJourney
-              slug={property.slug}
-              tour={tour}
-              capture={!demo && property.captureLeads}
-            />
+            {demo ? (
+              <TourViewer
+                scenes={tour.scenes}
+                floorPlans={tour.floorPlans}
+                initialSceneId={tour.initialSceneId}
+              />
+            ) : (
+              <PublicJourney slug={property.slug} tour={tour} />
+            )}
           </section>
         ))}
         {exterior && (

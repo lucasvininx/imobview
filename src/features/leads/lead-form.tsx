@@ -9,11 +9,15 @@ export function LeadForm({
   stage,
   notes,
   canDelete,
+  brokerId,
+  brokers,
 }: {
   id: string;
   stage: string;
   notes: string;
   canDelete: boolean;
+  brokerId: string | null;
+  brokers: { id: string; name: string; active: boolean }[];
 }) {
   const [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
@@ -37,6 +41,20 @@ export function LeadForm({
           }
         }}
       >
+        <label className="field">
+          Corretor do atendimento
+          <select name="brokerId" defaultValue={brokerId ?? ""}>
+            <option value="">Ainda não atribuído</option>
+            {brokers
+              .filter((b) => b.active || b.id === brokerId)
+              .map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                  {b.active ? "" : " (inativo)"}
+                </option>
+              ))}
+          </select>
+        </label>
         <label className="field">
           Etapa comercial
           <select name="stage" defaultValue={stage}>
