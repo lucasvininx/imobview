@@ -16,6 +16,9 @@ import {
 } from "@/features/financing/calc";
 import { money } from "@/lib/format";
 import { listBrokers } from "@/features/organizations/brokers";
+import { ProfileForm } from "@/features/leads/profile-form";
+import { listProperties } from "@/features/properties/service";
+import { isCompleteLead } from "@/features/leads/profile-schema";
 export default async function Page({
   params,
 }: {
@@ -30,9 +33,20 @@ export default async function Page({
     throw error;
   });
   const brokers = await listBrokers(actor);
+  const properties = await listProperties(actor);
   return (
     <>
-      <PageHeader title={lead.name} description={lead.property.title} />
+      <PageHeader
+        title={lead.name}
+        description={
+          lead.property?.title ?? "Imóvel de interesse ainda não definido"
+        }
+      />
+      <p
+        className={`profile-badge ${isCompleteLead(lead) ? "complete" : "incomplete"}`}
+      >
+        {isCompleteLead(lead) ? "Cadastro completo" : "Cadastro a completar"}
+      </p>
       <section className="form-card">
         <h2>Contato e origem</h2>
         <p>
@@ -49,11 +63,31 @@ export default async function Page({
             timeZone: "America/Sao_Paulo",
           })}
         </p>
-        <p>Contato solicitado pelo visitante · Aviso {lead.consentVersion}</p>
+        <p>
+          {lead.source === "manual"
+            ? "Cadastrado pela equipe"
+            : "Contato solicitado pelo visitante"}{" "}
+          · Registro {lead.consentVersion}
+        </p>
         <a href={`/api/leads/${id}/export`} className="text-link">
           Exportar dados deste lead
         </a>
       </section>
+      {can(membership.role, "lead:update") && (
+        <ProfileForm
+          key={lead.updatedAt.toISOString()}
+          lead={{
+            id: lead.id,
+            name: lead.name,
+            email: lead.email,
+            phone: lead.phone,
+            cpf: lead.cpf,
+            birthDate: lead.birthDate?.toISOString().slice(0, 10) ?? "",
+            propertyId: lead.propertyId,
+          }}
+          properties={properties.map(({ id, title }) => ({ id, title }))}
+        />
+      )}
       <InterestDetails interest={lead.interest} />
       <LeadForm
         id={id}

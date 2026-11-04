@@ -1,415 +1,165 @@
 import Image from "next/image";
 import Link from "next/link";
 import {
-  ArrowDown,
   ArrowUpRight,
-  Play,
   Scan,
-  Images,
-  Link2,
-  Building2,
-  Check,
-  MousePointer2,
-  Maximize,
   MapPin,
+  Building2,
+  Sparkles,
+  ArrowRight,
 } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { ButtonLink } from "@/components/ui";
-const features = [
-  {
-    icon: Images,
-    title: "Cada detalhe, bem apresentado.",
-    description:
-      "Fotos organizadas em uma galeria que valoriza os ambientes e os detalhes do imóvel.",
-    tag: "GALERIA DE FOTOS",
-  },
-  {
-    icon: Scan,
-    title: "Liberdade para explorar.",
-    description:
-      "Tours virtuais e experiências 360° para conhecer cada espaço no próprio ritmo.",
-    tag: "EXPERIÊNCIAS IMERSIVAS",
-  },
-  {
-    icon: Link2,
-    title: "Um imóvel. Um único link.",
-    description:
-      "Uma apresentação organizada, pronta para compartilhar onde seu cliente estiver.",
-    tag: "PÁGINA COMPARTILHÁVEL",
-  },
-  {
-    icon: Building2,
-    title: "Seu portfólio em um só lugar.",
-    description:
-      "Organize os imóveis da sua imobiliária, prepare rascunhos e escolha o que publicar.",
-    tag: "GESTÃO DO PORTFÓLIO",
-  },
-];
-const faqs = [
-  [
-    "O que é o ImobView?",
-    "É uma plataforma para organizar imóveis, enviar fotos e montar tours 360° com ambientes conectados em páginas compartilháveis.",
-  ],
-  [
-    "Preciso de equipamentos especiais?",
-    "Para gerenciar imóveis, basta um navegador. Para o tour, envie panoramas equiretangulares 360° × 180°, em proporção 2:1, capturados com câmera 360° ou equipamento e software de costura adequados. Fotos comuns não substituem panoramas completos.",
-  ],
-  [
-    "Posso compartilhar pelo WhatsApp?",
-    "Sim. As páginas publicadas possuem um link próprio, com título e descrição preparados para compartilhamento.",
-  ],
-  [
-    "O ImobView já está disponível?",
-    "O beta tem entrada acompanhada e condições combinadas com cada imobiliária. Explore a demonstração e fale com a equipe. Não há cobrança automática nesta etapa.",
-  ],
-];
-export default function Home() {
+import { SearchForm } from "@/features/marketplace/search-form";
+import { ListingCard } from "@/features/marketplace/listing-card";
+import { searchMarketplace } from "@/features/marketplace/service";
+import { searchSchema } from "@/features/marketplace/search";
+export const dynamic = "force-dynamic";
+export default async function Home() {
+  const listings = await searchMarketplace(searchSchema.parse({}));
   return (
     <>
       <SiteHeader />
-      <main id="conteudo">
-        <section className="hero">
-          <Image
-            className="hero-image"
-            src="/images/residencia.jpg"
-            alt="Residência contemporânea com grandes janelas, jardim e piscina"
-            fill
-            priority
-            sizes="100vw"
-          />
-          <div className="hero-shade" />
-          <div className="container hero-content">
+      <main id="conteudo" className="marketplace">
+        <section className="market-hero container">
+          <div className="market-hero-copy">
             <p className="eyebrow">
-              <span className="status-dot" /> UMA NOVA PERSPECTIVA PARA O
-              MERCADO IMOBILIÁRIO
+              <span className="status-dot" /> SEU PRÓXIMO CAPÍTULO COMEÇA AQUI
             </p>
             <h1>
-              A próxima visita
+              Um lugar para
               <br />
-              começa <span>aqui.</span>
+              chamar de <em>seu.</em>
             </h1>
-            <p className="hero-description">
-              Mais do que mostrar um imóvel.
-              <br />
-              Faça seu cliente se imaginar dentro dele.
-            </p>
-            <p className="hero-small">
-              Fotos, tours e experiências que aproximam
-              <br className="desktop-only" /> pessoas do seu próximo lugar.
-            </p>
-            <div className="hero-ctas">
-              <ButtonLink href="/demonstracao">
-                Explorar a experiência <ArrowUpRight size={18} />
-              </ButtonLink>
-              <ButtonLink href="#produto" variant="secondary">
-                <Play size={15} /> Conhecer o ImobView
-              </ButtonLink>
-            </div>
-            <div className="hero-note">
-              <span className="line" /> TECNOLOGIA QUE VALORIZA CADA ESPAÇO.
-            </div>
-          </div>
-          <Link href="/demonstracao" className="hero-property">
-            <span className="property-preview">
-              <Play size={18} fill="currentColor" />
-            </span>
-            <span>
-              <small>SEU PRÓXIMO IMÓVEL, SOB OUTRO OLHAR</small>
-              <strong>Entre. Explore. Imagine.</strong>
-            </span>
-            <ArrowUpRight size={20} />
-          </Link>
-          <a
-            href="#produto"
-            className="hero-scroll"
-            aria-label="Explorar o produto"
-          >
-            <ArrowDown size={17} />
-          </a>
-        </section>
-        <div className="promise-bar">
-          <div className="container">
-            <span>
-              O imóvel no centro.
-              <br />
-              <strong>A experiência em primeiro lugar.</strong>
-            </span>
-            <div>
-              <Images size={19} /> Imagens que envolvem
-            </div>
-            <div>
-              <Scan size={20} /> Espaços que surpreendem
-            </div>
-            <div>
-              <Link2 size={19} /> Conexões que aproximam
-            </div>
-          </div>
-        </div>
-        <section id="produto" className="section container product-section">
-          <div className="section-copy">
-            <p className="eyebrow">MENOS IMAGINAÇÃO. MAIS EXPERIÊNCIA.</p>
-            <h2>
-              Fotos mostram.
-              <br />
-              <span className="muted">Experiências</span>
-              <br />
-              conectam.
-            </h2>
             <p>
-              Uma imagem nem sempre conta a história inteira. A luz que entra
-              pela janela. A conexão entre os ambientes. A sensação de estar em
-              casa.
+              Comprar ou alugar pode ser mais simples.
+              <br />
+              Conte o que procura. A gente conecta você ao seu próximo lar.
             </p>
-            <p>
-              Com o ImobView°, seu portfólio ganha uma nova dimensão — e cada
-              visita presencial começa com muito mais interesse.
-            </p>
-            <Link href="/demonstracao" className="text-link">
-              Veja com seus próprios olhos <ArrowUpRight size={18} />
-            </Link>
-          </div>
-          <div className="experience-preview">
-            <Image
-              src="/images/living.jpg"
-              alt="Sala ampla e iluminada de um apartamento demonstrativo"
-              fill
-              sizes="(max-width: 800px) 100vw, 50vw"
-            />
-            <div className="preview-top">
-              <span className="preview-tag">
-                <span className="status-dot" /> EXPERIÊNCIA IMOBVIEW
-              </span>
-              <Maximize size={18} />
-            </div>
-            <Link
-              className="play-circle"
-              href="/demonstracao"
-              aria-label="Abrir apresentação demonstrativa"
-            >
-              <ArrowUpRight size={30} />
-            </Link>
-            <div className="preview-bottom">
-              <div>
-                <small>UM NOVO JEITO DE CONHECER</small>
-                <h3>Seu próximo lugar.</h3>
-                <span>
-                  <MapPin size={13} /> Apartamento demonstrativo · São Paulo
-                </span>
-              </div>
-              <span className="degree-mark">360°</span>
-            </div>
-            <div className="floating-note">
-              <MousePointer2 size={17} />
+            <div className="market-hero-note">
+              <Scan size={20} />
               <span>
-                Uma experiência.
+                Conheça por dentro.
                 <br />
-                <strong>Inúmeras possibilidades.</strong>
+                <strong>Explore imóveis com tour 360°.</strong>
               </span>
             </div>
           </div>
-        </section>
-        <section id="recursos" className="section features-section">
-          <div className="container">
-            <div className="section-heading">
-              <div>
-                <p className="eyebrow">UM PORTFÓLIO COM OUTRA PRESENÇA</p>
-                <h2>
-                  Mais perspectivas.
-                  <br />
-                  Mais possibilidades.
-                </h2>
-              </div>
-              <p>
-                Uma plataforma pensada para aproximar
-                <br />o seu imóvel de quem procura por ele.
-              </p>
+          <div className="market-hero-photo">
+            <Image
+              src="/images/residencia.jpg"
+              alt="Inspiração: casa contemporânea com jardim e piscina"
+              fill
+              priority
+              sizes="(max-width: 760px) 100vw, 55vw"
+            />
+            <span className="photo-caption">
+              Inspiração para o seu próximo lar
+            </span>
+            <div className="hero-photo-label">
+              <span className="hero-label-icon">
+                <Building2 size={22} />
+              </span>
+              <span>
+                Uma nova perspectiva.
+                <strong>Do primeiro olhar à nova chave.</strong>
+              </span>
+              <ArrowUpRight size={22} />
             </div>
-            <div className="feature-grid">
-              {features.map(({ icon: Icon, ...feature }, index) => (
-                <article className="feature-card" key={feature.title}>
-                  <div className="feature-card-top">
-                    <Icon size={25} />
-                    <span>0{index + 1}</span>
-                  </div>
-                  <small>{feature.tag}</small>
-                  <h3>{feature.title}</h3>
-                  <p>{feature.description}</p>
-                  <span className="feature-stage">
-                    {index === 2
-                      ? "Disponível na primeira versão"
-                      : "No roadmap do produto"}
-                  </span>
-                </article>
+          </div>
+        </section>
+        <div className="container home-search">
+          <SearchForm />
+        </div>
+        <section className="container market-section" id="imoveis">
+          <div className="market-section-heading">
+            <div>
+              <p className="eyebrow">ENCONTRE SEU PRÓXIMO ENDEREÇO</p>
+              <h2>Novas possibilidades, portas abertas.</h2>
+              <p>Imóveis publicados pelas imobiliárias da nossa rede.</p>
+            </div>
+            <Link className="text-link" href="/buscar">
+              Explorar todos <ArrowRight size={17} />
+            </Link>
+          </div>
+          {listings.items.length ? (
+            <div className="listing-grid">
+              {listings.items.slice(0, 6).map((listing) => (
+                <ListingCard key={listing.slug} listing={listing} />
               ))}
             </div>
-          </div>
-        </section>
-        <section id="como-funciona" className="section container">
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">DO CADASTRO AO PRIMEIRO ENCANTO</p>
-              <h2>
-                Simples para você.
-                <br />
-                Marcante para seu cliente.
-              </h2>
+          ) : (
+            <div className="market-empty">
+              <MapPin size={28} />
+              <h3>Seu próximo endereço pode estar chegando.</h3>
+              <p>
+                Novos imóveis aparecerão aqui assim que forem publicados pelas
+                imobiliárias.
+              </p>
+              <Link className="button button-secondary" href="/buscar">
+                Explorar busca
+              </Link>
             </div>
-            <ButtonLink href="/demonstracao" variant="secondary">
-              Ver na prática <ArrowUpRight size={16} />
-            </ButtonLink>
-          </div>
-          <div className="steps">
-            {[
-              [
-                "Organize",
-                "Cadastre o imóvel e reúna os detalhes que fazem a diferença.",
-              ],
-              [
-                "Apresente",
-                "Prepare uma página com a identidade e a história do imóvel.",
-              ],
-              [
-                "Compartilhe",
-                "Publique e leve a experiência até seu cliente com um único link.",
-              ],
-            ].map(([title, description], i) => (
-              <article key={title}>
-                <span className="step-number">0{i + 1}</span>
-                <h3>{title}</h3>
-                <p>{description}</p>
-              </article>
-            ))}
-          </div>
+          )}
         </section>
-        <section className="agency-banner container">
-          <Image
-            src="/images/interior.jpg"
-            alt="Interior com arquitetura sofisticada e iluminação natural"
-            fill
-            sizes="100vw"
-          />
-          <div className="agency-copy">
-            <p className="eyebrow">PARA QUEM ENXERGA ALÉM</p>
-            <h2>
-              Seu portfólio merece
-              <br />
-              uma apresentação
-              <br />à altura.
-            </h2>
-            <p>
-              Para imobiliárias, corretores e incorporadoras
-              <br />
-              que acreditam no poder de uma boa experiência.
-            </p>
-            <ButtonLink href="/contato">
-              Vamos conversar <ArrowUpRight size={16} />
-            </ButtonLink>
-          </div>
-        </section>
-        <section id="planos" className="section container">
-          <div className="center-heading">
-            <p className="eyebrow">ESPAÇO PARA CRESCER COM VOCÊ</p>
-            <h2>Uma nova fase para o seu negócio.</h2>
-            <p>
-              Escolha como começar. As condições e os limites do beta são
-              combinados com nossa equipe antes da contratação.
-            </p>
-          </div>
-          <div className="plans">
-            {[
-              {
-                name: "Conheça",
-                desc: "O primeiro passo para apresentar melhor.",
-                items: [
-                  "Organização de imóveis",
-                  "Galeria de fotos",
-                  "Páginas compartilháveis",
-                ],
-              },
-              {
-                name: "Beta 360°",
-                desc: "Mais formas de explorar cada espaço.",
-                items: [
-                  "Cadastro e apresentação de imóveis",
-                  "Tours virtuais e conteúdo 360°",
-                  "Contato direto por WhatsApp",
-                ],
-              },
-              {
-                name: "Seu portfólio",
-                desc: "Uma visão completa para sua imobiliária.",
-                items: [
-                  "Todos os recursos do beta",
-                  "Entrada acompanhada pela equipe",
-                  "Limites acordados conforme o volume",
-                ],
-              },
-            ].map((plan, i) => (
-              <article
-                className={`plan ${i === 1 ? "plan-featured" : ""}`}
-                key={plan.name}
-              >
-                <p className="eyebrow">
-                  {i === 1 ? "TOURS CONECTADOS" : "ENTRADA ACOMPANHADA"}
-                </p>
-                <h3>{plan.name}</h3>
-                <p>{plan.desc}</p>
-                <div className="plan-price">
-                  Sob consulta <span>condições do beta</span>
-                </div>
-                <ul>
-                  {plan.items.map((item) => (
-                    <li key={item}>
-                      <Check size={16} />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-                <ButtonLink
-                  href="/contato"
-                  variant={i === 1 ? "primary" : "secondary"}
-                >
-                  Tenho interesse <ArrowUpRight size={15} />
-                </ButtonLink>
-              </article>
-            ))}
-          </div>
-        </section>
-        <section id="faq" className="section container faq-section">
+        <section className="market-how container" id="como-funciona">
           <div>
-            <p className="eyebrow">SEM PONTAS SOLTAS</p>
+            <p className="eyebrow">DO SEU JEITO, NO SEU TEMPO</p>
             <h2>
-              Vamos esclarecer
+              Menos procura.
               <br />
-              suas dúvidas.
+              Mais possibilidades.
             </h2>
-            <Link href="/contato" className="text-link">
-              Fale com a gente <ArrowUpRight size={16} />
+          </div>
+          {[
+            {
+              icon: Sparkles,
+              title: "Descreva o seu lugar",
+              text: "Cidade, bairro, quartos e orçamento. Escreva como você falaria com alguém.",
+            },
+            {
+              icon: Scan,
+              title: "Entre antes de visitar",
+              text: "Explore fotos e tours 360° disponíveis para conhecer os detalhes de cada espaço.",
+            },
+            {
+              icon: Building2,
+              title: "Converse com quem conhece",
+              text: "Gostou? Envie seu interesse diretamente à imobiliária responsável pelo imóvel.",
+            },
+          ].map(({ icon: Icon, title, text }, i) => (
+            <article key={title}>
+              <span className="how-number">0{i + 1}</span>
+              <Icon size={24} />
+              <h3>{title}</h3>
+              <p>{text}</p>
+            </article>
+          ))}
+        </section>
+        <section className="market-professional container">
+          <div>
+            <p className="eyebrow">PARA IMOBILIÁRIAS E CORRETORES</p>
+            <h2>
+              Seu próximo cliente
+              <br />
+              também está procurando você.
+            </h2>
+            <p>
+              Publique seus imóveis, crie tours 360° e acompanhe cada
+              oportunidade em um só lugar.
+            </p>
+            <Link className="button button-primary" href="/para-imobiliarias">
+              Conhecer a plataforma <ArrowUpRight size={17} />
             </Link>
           </div>
-          <div className="faq-list">
-            {faqs.map(([question, answer]) => (
-              <details key={question}>
-                <summary>
-                  {question}
-                  <span>+</span>
-                </summary>
-                <p>{answer}</p>
-              </details>
-            ))}
+          <div className="professional-mark" aria-hidden="true">
+            <Building2 size={100} strokeWidth={0.7} />
+            <span>
+              Imóveis. Pessoas.
+              <br />
+              <strong>Conexões.</strong>
+            </span>
           </div>
-        </section>
-        <section className="final-cta container">
-          <p className="eyebrow">VISITAS QUE COMEÇAM ANTES DA PORTA</p>
-          <h2>
-            Mostre mais.
-            <br />
-            Desperte <span>novas possibilidades.</span>
-          </h2>
-          <ButtonLink href="/demonstracao">
-            Conheça o ImobView° <ArrowUpRight size={18} />
-          </ButtonLink>
         </section>
       </main>
       <SiteFooter />

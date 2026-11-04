@@ -275,7 +275,13 @@ test("visitor controls measurement, creates a lead, explores rooms and requests 
     await expect(
       page.getByRole("heading", { name: "Analytics", exact: true }),
     ).toBeVisible();
-    await expect(page.getByText(/100% dos tours iniciados/)).toBeVisible();
+    await expect(page.locator(".completion-ring")).toContainText("100%");
+    await expect(
+      page.getByText(
+        "dos tours iniciados tiveram todos os ambientes abertos.",
+        { exact: true },
+      ),
+    ).toBeVisible();
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,

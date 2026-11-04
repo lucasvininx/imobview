@@ -1,10 +1,13 @@
 ﻿# ImobView°
 
-Plataforma brasileira para organizar e apresentar imóveis. Este é o código-base do primeiro ciclo: fundação de SaaS multi-tenant, institucional, autenticação e imóveis com publicação pública.
+Plataforma brasileira para conectar quem busca imóveis às imobiliárias. Reúne portal de compra e locação, busca inteligente, tours 360°, gestão do portfólio, base de clientes, CRM e Analytics com isolamento por organização.
 
 ## O que funciona
 
-- Home responsiva com identidade fornecida, recursos, planos conceituais, FAQ e demonstração por fotos.
+- Portal público de compra e locação com busca inteligente, catálogo publicado, filtros e paginação; área profissional em `/para-imobiliarias`.
+- Base de Leads separada do CRM, cadastro e complementação de clientes (nome, e-mail, celular, CPF e nascimento), captação pelo portal e cadastro sem imóvel definido.
+- Analytics com evolução diária e indicadores reais; tema claro padrão e opção de modo escuro. [Funcionamento, IA opcional e migration](docs/marketplace.md).
+
 - Login, logout, recuperação de senha por SMTP, sessões persistidas, rate limiting e rotas protegidas.
 - Organizações e memberships independentes de usuários, OWNER/ADMIN/MEMBER/VIEWER e seleção de workspace.
 - Dashboard com contagens reais; listagem/busca; cadastro em três etapas; edição, publicação e arquivamento.

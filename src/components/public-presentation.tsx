@@ -13,6 +13,7 @@ import { FinancingSimulator } from "@/features/financing/simulator";
 import { ExteriorViewer } from "@/features/exterior/viewer";
 import type { ExteriorConfig } from "@/features/exterior/schema";
 import { TourViewer } from "@/features/tours/viewer";
+import { InterestForm } from "@/features/marketplace/interest-form";
 export function PublicPresentation({
   property,
   demo = false,
@@ -100,7 +101,10 @@ export function PublicPresentation({
           </div>
           <aside className="public-price">
             <p>Apresentado por {property.organizationName}</p>
-            <strong>{money(property.priceCents)}</strong>
+            <strong>
+              {money(property.priceCents)}
+              {!property.forSale && !demo && <small> /mês</small>}
+            </strong>
             <ShareButton />
             {demo ? (
               <ButtonLink href="/contato">Conhecer o ImobView ↗</ButtonLink>
@@ -131,6 +135,12 @@ export function PublicPresentation({
                   </p>
                 )}
               </div>
+            )}
+            {!demo && (
+              <InterestForm
+                slug={property.slug}
+                agency={property.organizationName}
+              />
             )}
             <p style={{ fontSize: 10 }}>Uma apresentação ImobView°</p>
           </aside>

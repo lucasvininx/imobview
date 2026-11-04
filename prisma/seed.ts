@@ -126,9 +126,10 @@ try {
     for (const item of examples)
       await db.property.upsert({
         where: { slug: item.slug },
-        update: {},
+        update: { isDemo: true },
         create: {
           ...item,
+          isDemo: true,
           organizationId: organization.id,
           description:
             "Imóvel fictício para demonstração. Ambientes integrados, iluminação natural e espaços pensados para viver bem. Não se trata de uma oferta comercial.",

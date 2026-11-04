@@ -5,7 +5,110 @@ import { DomainError } from "@/domain/errors";
 import { stageSchema } from "./schema";
 import { scoreLead, type LeadInterest } from "./score";
 import type { Prisma } from "@/generated/prisma/client";
+import { leadProfileSchema } from "./profile-schema";
 const idSchema = z.uuid();
+export function saveLeadProfile(actor: Actor, input: unknown, id?: string) {
+  if (id) idSchema.parse(id);
+  const profile = leadProfileSchema.parse(input);
+  return withTenant(actor, "lead:update", async (tx) => {
+    if (
+      id &&
+      !(await tx.lead.findFirst({
+        where: { id, organizationId: actor.organizationId },
+      }))
+    )
+      throw new DomainError("NOT_FOUND", "Lead não encontrado.");
+    if (
+      profile.propertyId &&
+      !(await tx.property.findFirst({
+        where: { id: profile.propertyId, organizationId: actor.organizationId },
+      }))
+    )
+      throw new DomainError(
+        "VALIDATION",
+        "Escolha um imóvel desta imobiliária.",
+      );
+    const data = {
+      ...profile,
+      propertyId: profile.propertyId || null,
+      birthDate: profile.birthDate
+        ? new Date(profile.birthDate + "T00:00:00Z")
+        : null,
+    };
+    return id
+      ? tx.lead.update({
+          where: {
+            id_organizationId: { id, organizationId: actor.organizationId },
+          },
+          data,
+        })
+      : tx.lead.create({
+          data: {
+            ...data,
+            organizationId: actor.organizationId,
+            source: "manual",
+            consentVersion: "team-v1",
+          },
+        });
+  });
+}
+
+export function leadDirectory(actor: Actor, input: unknown) {
+  const filters = z
+    .object({
+      q: z.string().trim().max(160).default(""),
+      completeness: z.enum(["", "complete", "incomplete"]).default(""),
+      source: z.enum(["", "manual", "marketplace", "tour"]).default(""),
+      page: z.coerce.number().int().min(1).max(10000).default(1),
+    })
+    .parse(input);
+  return withTenant(actor, "lead:read", async (tx) => {
+    const complete: Prisma.LeadWhereInput = {
+      email: { not: "" },
+      phone: { not: "" },
+      cpf: { not: "" },
+      birthDate: { not: null },
+    };
+    const where: Prisma.LeadWhereInput = {
+      organizationId: actor.organizationId,
+      ...(filters.q
+        ? {
+            OR: ["name", "email", "phone", "cpf"].map((key) => ({
+              [key]: { contains: filters.q, mode: "insensitive" },
+            })),
+          }
+        : {}),
+      ...(filters.completeness === "complete"
+        ? { AND: [complete] }
+        : filters.completeness === "incomplete"
+          ? { NOT: complete }
+          : {}),
+      ...(filters.source === "tour"
+        ? { source: { notIn: ["manual", "marketplace"] } }
+        : filters.source
+          ? { source: filters.source }
+          : {}),
+    };
+    const [items, total, all, completed] = await Promise.all([
+      tx.lead.findMany({
+        where,
+        include: {
+          property: { select: { title: true } },
+          broker: { select: { name: true } },
+        },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        skip: (filters.page - 1) * 30,
+        take: 30,
+      }),
+      tx.lead.count({ where }),
+      tx.lead.count({ where: { organizationId: actor.organizationId } }),
+      tx.lead.count({
+        where: { organizationId: actor.organizationId, ...complete },
+      }),
+    ]);
+    return { items, total, all, completed, filters };
+  });
+}
 // One aggregate query per page; requests use a subquery to avoid join fan-out.
 async function interestByLead(
   tx: Prisma.TransactionClient,
@@ -239,8 +342,11 @@ export function updateRequest(actor: Actor, id: string, input: unknown) {
 }
 export function analytics(actor: Actor, propertyId?: string) {
   if (propertyId) idSchema.parse(propertyId);
-  const since = new Date(Date.now() - 30 * 86400000);
   return withTenant(actor, "lead:read", async (tx) => {
+    const [period] = await tx.$queryRaw<
+      { since: Date }[]
+    >`SELECT ((now() AT TIME ZONE 'America/Sao_Paulo')::date-29)::timestamp AT TIME ZONE 'America/Sao_Paulo' AS since`;
+    const since = period.since;
     const where = {
       organizationId: actor.organizationId,
       ...(propertyId ? { propertyId } : {}),
@@ -307,6 +413,21 @@ export function analytics(actor: Actor, propertyId?: string) {
         },
       }),
     ]);
+    const daily = await tx.$queryRaw<
+      { day: string; leads: number; sessions: number }[]
+    >`
+      WITH days AS (
+        SELECT generate_series((now() AT TIME ZONE 'America/Sao_Paulo')::date-29,(now() AT TIME ZONE 'America/Sao_Paulo')::date,'1 day')::date AS day
+      ), lead_days AS (
+        SELECT ("createdAt" AT TIME ZONE 'America/Sao_Paulo')::date AS day,count(*)::integer AS count FROM "Lead"
+        WHERE "organizationId"=${actor.organizationId}::uuid AND "createdAt">=${since}
+        AND (${propertyId ?? null}::uuid IS NULL OR "propertyId"=${propertyId ?? null}::uuid) GROUP BY 1
+      ), visit_days AS (
+        SELECT ("createdAt" AT TIME ZONE 'America/Sao_Paulo')::date AS day,count(*)::integer AS count FROM "TourVisit"
+        WHERE "organizationId"=${actor.organizationId}::uuid AND tracking=true AND "createdAt">=${since}
+        AND (${propertyId ?? null}::uuid IS NULL OR "propertyId"=${propertyId ?? null}::uuid) GROUP BY 1
+      ) SELECT to_char(d.day,'YYYY-MM-DD') AS day,coalesce(l.count,0) AS leads,coalesce(v.count,0) AS sessions
+        FROM days d LEFT JOIN lead_days l USING(day) LEFT JOIN visit_days v USING(day) ORDER BY d.day`;
     return {
       sessions,
       leads,
@@ -316,6 +437,7 @@ export function analytics(actor: Actor, propertyId?: string) {
       started,
       completed,
       simulations,
+      daily,
       rooms: rooms.map((r) => ({
         ...r,
         views: Number(r.views),

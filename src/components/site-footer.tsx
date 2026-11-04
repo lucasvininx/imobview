@@ -9,8 +9,9 @@ export function SiteFooter() {
           <p>Uma nova perspectiva para cada imóvel.</p>
         </div>
         <nav aria-label="Rodapé">
-          <Link href="/#produto">Produto</Link>
-          <Link href="/#planos">Planos</Link>
+          <Link href="/buscar?purpose=SALE">Comprar</Link>
+          <Link href="/buscar?purpose=RENT">Alugar</Link>
+          <Link href="/para-imobiliarias">Para imobiliárias</Link>
           <Link href="/contato">Contato</Link>
           <Link href="/login">Entrar</Link>
         </nav>

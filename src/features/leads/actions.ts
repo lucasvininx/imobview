@@ -1,11 +1,35 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import { requireWorkspace } from "@/server/session";
-import { updateLead, deleteLead, updateRequest } from "./service";
+import {
+  updateLead,
+  deleteLead,
+  updateRequest,
+  saveLeadProfile,
+} from "./service";
+import { z } from "zod";
 import { DomainError } from "@/domain/errors";
 import { after } from "next/server";
 import { deliverWhatsApp } from "@/features/notifications/whatsapp";
 import { logError } from "@/server/logger";
+export async function saveLeadProfileAction(input: unknown, id?: string) {
+  const { actor } = await requireWorkspace();
+  try {
+    const lead = await saveLeadProfile(actor, input, id);
+    revalidatePath("/app", "layout");
+    return { success: true as const, id: lead.id };
+  } catch (error) {
+    return {
+      success: false as const,
+      error:
+        error instanceof z.ZodError
+          ? (error.issues[0]?.message ?? "Confira os dados.")
+          : error instanceof DomainError
+            ? error.message
+            : "Não foi possível salvar. Tente novamente.",
+    };
+  }
+}
 export async function leadAction(id: string, input: unknown) {
   const { actor } = await requireWorkspace();
   try {

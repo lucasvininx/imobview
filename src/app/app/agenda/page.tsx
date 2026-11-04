@@ -24,7 +24,7 @@ export default async function Page() {
               <h2>
                 <Link href={`/app/leads/${r.leadId}`}>{r.lead.name}</Link>
               </h2>
-              <p>{r.lead.property.title}</p>
+              <p>{r.lead.property?.title ?? "Imóvel a definir"}</p>
               <p>
                 {r.preferredDate.split("-").reverse().join("/")} ·{" "}
                 {periodLabels[r.period as keyof typeof periodLabels]}

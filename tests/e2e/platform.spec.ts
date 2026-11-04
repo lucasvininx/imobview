@@ -52,7 +52,7 @@ test("public site and gallery work at desktop and mobile sizes", async ({
     await page.setViewportSize({ width, height: 960 });
     await page.goto("/");
     await expect(
-      page.getByRole("heading", { name: "A próxima visita começa aqui." }),
+      page.getByRole("heading", { name: "Um lugar para chamar de seu." }),
     ).toBeVisible();
     await expect
       .poll(() =>

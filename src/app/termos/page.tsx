@@ -11,21 +11,23 @@ export default function Page() {
         <p className="eyebrow">SOBRE ESTA VERSÃO</p>
         <h1>Termos de uso</h1>
         <p>
-          O ImobView° está em desenvolvimento. A demonstração contém imóveis
-          fictícios e não representa oferta de compra, venda ou locação.
+          O ImobView° permite buscar imóveis publicados por imobiliárias e
+          corretores. As informações, disponibilidade e condições de cada oferta
+          são de responsabilidade da imobiliária anunciante. A página de
+          demonstração identificada como tal contém imóveis fictícios.
         </p>
         <h2>Acesso à plataforma</h2>
         <p>
-          O acesso é restrito a contas autorizadas para testes. Não publique
-          dados pessoais, imagens sem autorização ou informações de terceiros
-          neste ambiente.
+          O acesso à área profissional é restrito a contas autorizadas. Não
+          publique dados pessoais, imagens sem autorização ou informações de
+          terceiros neste ambiente.
         </p>
         <h2>Planos e disponibilidade</h2>
         <p>
-          As propostas de planos apresentadas são conceituais. Não há cobrança
-          nem contratação automática nesta versão. Condições comerciais,
-          limites, responsabilidades e suporte serão definidos em termos
-          próprios antes do lançamento.
+          O envio de interesse ou a solicitação de visita não reserva um imóvel
+          nem confirma uma contratação. A imobiliária combina os detalhes com o
+          interessado. Condições comerciais da plataforma, limites e suporte são
+          definidos diretamente com a equipe; não há contratação automática.
         </p>
         <h2>Responsável e atendimento</h2>
         {business.name && (

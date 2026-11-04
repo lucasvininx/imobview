@@ -9,11 +9,13 @@ import {
   CalendarDays,
   ChartColumn,
   ContactRound,
+  PanelsTopLeft,
 } from "lucide-react";
 const links = [
   { href: "/app", label: "Visão geral", icon: LayoutDashboard },
   { href: "/app/imoveis", label: "Imóveis", icon: Building2 },
-  { href: "/app/leads", label: "Leads e CRM", icon: ContactRound },
+  { href: "/app/leads", label: "Leads", icon: ContactRound },
+  { href: "/app/crm", label: "CRM", icon: PanelsTopLeft },
   { href: "/app/agenda", label: "Visitas", icon: CalendarDays },
   { href: "/app/analytics", label: "Analytics", icon: ChartColumn },
   { href: "/app/equipe", label: "Equipe", icon: Users },

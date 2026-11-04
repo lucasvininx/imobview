@@ -26,6 +26,7 @@ export function LeadForm({
     <>
       <form
         className="form-card"
+        id="atendimento"
         onSubmit={async (e) => {
           e.preventDefault();
           const input = Object.fromEntries(new FormData(e.currentTarget));

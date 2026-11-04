@@ -95,6 +95,7 @@ model Organization {
   properties Property[]
   tours Tour[]
   brokers Broker[]
+  leads Lead[]
 }
 
 model OrganizationMember {
@@ -153,6 +154,7 @@ model Property {
   suites Int @default(0)
   commercialNotes String @default("") @db.VarChar(2000)
   captureLeads Boolean @default(true)
+  isDemo Boolean @default(false)
   exterior Json?
   brokerId String? @db.Uuid
   broker Broker? @relation(fields: [brokerId, organizationId], references: [id, organizationId], onDelete: NoAction)
@@ -188,14 +190,17 @@ model Broker {
 model Lead {
   id String @id @default(uuid()) @db.Uuid
   organizationId String @db.Uuid
-  propertyId String @db.Uuid
-  property Property @relation(fields: [propertyId, organizationId], references: [id, organizationId], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  propertyId String? @db.Uuid
+  property Property? @relation(fields: [propertyId, organizationId], references: [id, organizationId], onDelete: Cascade)
   brokerId String? @db.Uuid
   broker Broker? @relation(fields: [brokerId, organizationId], references: [id, organizationId], onDelete: NoAction)
   notifications Notification[]
   name String @db.VarChar(160)
   email String @db.VarChar(254)
   phone String @db.VarChar(15)
+  cpf String @default("") @db.VarChar(11)
+  birthDate DateTime? @db.Date
   stage String @default("NEW") @db.VarChar(30)
   notes String @default("") @db.VarChar(5000)
   source String @default("direct") @db.VarChar(120)

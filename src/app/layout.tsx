@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Manrope } from "next/font/google";
 import "./globals.css";
+import { cookies } from "next/headers";
+import { ThemeProvider } from "@/components/theme-provider";
 const manrope = Manrope({
   subsets: ["latin"],
   variable: "--font-manrope",
@@ -15,7 +17,7 @@ export const metadata: Metadata = {
     template: "%s | ImobView°",
   },
   description:
-    "Transforme a apresentação dos seus imóveis. Páginas compartilháveis e uma nova perspectiva para imobiliárias e corretores.",
+    "Encontre imóveis para comprar ou alugar com busca inteligente, tours 360° e contato direto com imobiliárias e corretores.",
   openGraph: {
     type: "website",
     locale: "pt_BR",
@@ -26,16 +28,20 @@ export const metadata: Metadata = {
   },
   twitter: { card: "summary_large_image" },
 };
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const theme =
+    (await cookies()).get("imobview-theme")?.value === "dark"
+      ? "dark"
+      : "light";
   return (
-    <html lang="pt-BR" className={manrope.variable}>
+    <html lang="pt-BR" className={manrope.variable} data-theme={theme}>
       <body>
         <a href="#conteudo" className="skip-link">
           Pular para o conteúdo
         </a>
-        {children}
+        <ThemeProvider initial={theme}>{children}</ThemeProvider>
       </body>
     </html>
   );

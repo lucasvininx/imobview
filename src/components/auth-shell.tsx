@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Brand } from "./brand";
+import { ThemeToggle } from "./theme-provider";
 export function AuthShell({
   title,
   description,
@@ -40,12 +41,13 @@ export function AuthShell({
           <Link href="/" className="auth-back">
             <ArrowLeft size={15} /> Voltar ao site
           </Link>
+          <ThemeToggle />
           <h1>{title}</h1>
           <p>{description}</p>
           {children}
           <div className="auth-bottom">
             Ainda não conhece o ImobView?{" "}
-            <Link href="/demonstracao">Explore a demonstração ↗</Link>
+            <Link href="/para-imobiliarias">Conheça a plataforma ↗</Link>
           </div>
         </div>
       </section>

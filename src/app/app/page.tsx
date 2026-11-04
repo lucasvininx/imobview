@@ -85,8 +85,8 @@ export default async function Dashboard() {
             Organize os detalhes, publique sua página e compartilhe uma nova
             perspectiva com seus clientes.
           </p>
-          <Link href="/demonstracao" className="text-link">
-            Conheça uma apresentação <ArrowUpRight size={15} />
+          <Link href="/buscar" className="text-link">
+            Ver portal de imóveis <ArrowUpRight size={15} />
           </Link>
         </div>
         <Scan size={85} strokeWidth={1} />
@@ -109,7 +109,9 @@ export default async function Dashboard() {
                 {hot.top.map((lead) => (
                   <li key={lead.id}>
                     <Link href={`/app/leads/${lead.id}`}>{lead.name}</Link>
-                    <span className="muted">{lead.property.title}</span>
+                    <span className="muted">
+                      {lead.property?.title ?? "Imóvel a definir"}
+                    </span>
                     <InterestBadge interest={lead.interest} />
                   </li>
                 ))}
@@ -117,7 +119,7 @@ export default async function Dashboard() {
             </>
           )}
           <Link className="text-link" href="/app/leads">
-            Abrir leads e CRM ↗
+            Abrir base de leads ↗
           </Link>{" "}
           ·{" "}
           <Link className="text-link" href="/app/agenda">

@@ -10,7 +10,7 @@ export function businessContact() {
     email: email.success ? email.data : "",
     whatsapp: whatsappUrl(
       process.env.BUSINESS_WHATSAPP || "",
-      "Olá! Quero conhecer o ImobView e participar do beta.",
+      "Olá! Quero conhecer o ImobView para minha imobiliária.",
     ),
   };
 }

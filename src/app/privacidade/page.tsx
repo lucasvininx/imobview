@@ -11,25 +11,35 @@ export default function Page() {
         <p className="eyebrow">TRANSPARÊNCIA DESDE O INÍCIO</p>
         <h1>Privacidade</h1>
         <p>
-          Esta versão do ImobView° está em desenvolvimento e destinada a
-          demonstração e testes autorizados.
+          O ImobView° conecta quem busca imóveis às imobiliárias e oferece
+          ferramentas para a gestão dos contatos e atendimentos.
         </p>
         <h2>Dados utilizados nesta versão</h2>
         <p>
           Contas autorizadas utilizam nome, e-mail e credenciais protegidas pelo
           provedor de autenticação. Cookies essenciais mantêm a sessão e a
-          seleção de organização. O sistema de autenticação também pode
-          registrar endereço IP e informações do navegador para proteger o
-          acesso.
+          seleção de organização. Um cookie também guarda sua preferência de
+          tema claro ou escuro. O sistema de autenticação pode registrar
+          endereço IP e informações do navegador para proteger o acesso.
         </p>
         <h2>Demonstração e navegação</h2>
+        <p>
+          Quando a interpretação por IA está habilitada, o texto digitado na
+          busca é enviado à OpenAI para extrair os critérios do imóvel. Evite
+          incluir dados pessoais na pesquisa. Os cadastros dos clientes não são
+          enviados ao provedor por essa funcionalidade.
+        </p>
         <p>
           Os imóveis demonstrativos são fictícios e a demonstração pode ser
           explorada sem cadastro. Nos links públicos de imóveis, o cadastro com
           nome, e-mail e telefone é necessário antes de liberar o tour. Esses
           dados ficam disponíveis para a imobiliária responsável, mesmo sem
-          concluir o tour ou solicitar uma visita presencial. Não solicitamos
-          CPF.
+          concluir o tour ou solicitar uma visita presencial. O formulário de
+          interesse do portal envia nome, e-mail e celular à imobiliária
+          responsável mediante sua autorização, sem exigir um tour. Na área
+          profissional, a equipe pode complementar o cadastro com CPF e data de
+          nascimento fornecidos pelo cliente. Esses dados ficam restritos à
+          imobiliária e não aparecem nas páginas públicas.
         </p>
         <p>
           A medição de comportamento é opcional e começa apenas após sua

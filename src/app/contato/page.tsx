@@ -12,16 +12,18 @@ export default function Page() {
         <p className="eyebrow">UMA NOVA PERSPECTIVA COMEÇA AQUI</p>
         <h1>Vamos abrir novas portas.</h1>
         <p>
-          Apresente seus imóveis com tours 360° interativos. O beta tem entrada
-          acompanhada: ajudamos sua equipe a criar a conta, preparar panoramas e
-          publicar o primeiro imóvel.
+          Leve seus imóveis até quem está procurando um novo lugar. Nossa equipe
+          ajuda sua imobiliária a organizar o portfólio, preparar tours 360° e
+          acompanhar os contatos recebidos.
         </p>
-        <h2>Conheça o produto agora</h2>
+        <h2>Uma nova perspectiva para o seu negócio</h2>
         <p>
-          Explore a demonstração e fale com nossa equipe sobre os limites,
-          condições e suporte do beta.
+          Conheça as ferramentas para imobiliárias e corretores. Fale com nossa
+          equipe sobre condições, implantação e suporte para a sua operação.
         </p>
-        <ButtonLink href="/demonstracao">Explorar demonstração ↗</ButtonLink>
+        <ButtonLink href="/para-imobiliarias">
+          Conhecer a plataforma ↗
+        </ButtonLink>
         {contact.whatsapp && (
           <p>
             <a
@@ -41,8 +43,8 @@ export default function Page() {
         )}
         {!contact.whatsapp && !contact.email && (
           <p className="notice">
-            O canal comercial ainda não foi configurado. A demonstração está
-            disponível para você conhecer o produto.
+            O atendimento comercial está indisponível neste momento. Você pode
+            explorar o portal ou acessar sua conta profissional.
           </p>
         )}
       </main>
