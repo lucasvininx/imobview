@@ -310,6 +310,38 @@ export function updateLead(actor: Actor, id: string, input: unknown) {
     });
   });
 }
+export function moveLeadStage(actor: Actor, id: string, input: unknown) {
+  idSchema.parse(id);
+  const { stage, expectedStage } = z
+    .object({ stage: stageSchema, expectedStage: stageSchema })
+    .parse(input);
+  return withTenant(actor, "lead:update", async (tx) => {
+    const lead = await tx.lead.findFirst({
+      where: { id, organizationId: actor.organizationId },
+    });
+    if (!lead) throw new DomainError("NOT_FOUND", "Lead não encontrado.");
+    if (lead.stage !== expectedStage)
+      throw new DomainError(
+        "CONFLICT",
+        "Este lead foi atualizado por outra pessoa. O quadro será recarregado.",
+      );
+    const updated = await tx.lead.updateMany({
+      where: { id, organizationId: actor.organizationId, stage: expectedStage },
+      data: {
+        stage,
+        ...(stage === "PROPOSAL" && !lead.proposalAt
+          ? { proposalAt: new Date() }
+          : {}),
+        ...(stage === "WON" && !lead.wonAt ? { wonAt: new Date() } : {}),
+      },
+    });
+    if (!updated.count)
+      throw new DomainError(
+        "CONFLICT",
+        "Este lead foi atualizado por outra pessoa. O quadro será recarregado.",
+      );
+  });
+}
 export function deleteLead(actor: Actor, id: string) {
   idSchema.parse(id);
   return withTenant(actor, "organization:manage", (tx) =>

@@ -7,6 +7,7 @@ import {
   getLead,
   leadDirectory,
   analytics,
+  moveLeadStage,
 } from "@/features/leads/service";
 import { searchMarketplace } from "@/features/marketplace/service";
 import { searchSchema } from "@/features/marketplace/search";
@@ -190,7 +191,7 @@ it("returns a 30 day analytics series without leaking other tenants", async () =
   expect(data.daily.reduce((sum, day) => sum + day.leads, 0)).toBe(data.leads);
   expect((await analytics(other)).leads).toBe(0);
 });
-it("keeps demonstration properties out of commercial offers without removing their records", async () => {
+it("lists and identifies demonstration properties without treating them as real offers", async () => {
   const demo = await withTenant(actor, "property:create", (tx) =>
     tx.property.create({
       data: {
@@ -208,10 +209,98 @@ it("keeps demonstration properties out of commercial offers without removing the
   const result = await searchMarketplace(
     searchSchema.parse({ q: "Oferta demonstrativa marketplace" }),
   );
-  expect(result.total).toBe(0);
+  expect(result.total).toBe(1);
+  expect(result.items[0].isDemo).toBe(true);
   expect(
     await withTenant(actor, "property:read", (tx) =>
       tx.property.count({ where: { id: demo.id } }),
     ),
   ).toBe(1);
+});
+it("moves CRM status without overwriting notes, records milestones and rejects stale or cross-tenant moves", async () => {
+  const lead = await saveLeadProfile(actor, {
+    ...contact,
+    email: "crm-move@example.com",
+    cpf: "",
+    birthDate: "",
+    propertyId: "",
+  });
+  await withTenant(actor, "lead:update", (tx) =>
+    tx.lead.update({
+      where: { id: lead.id },
+      data: { notes: "Manter estas anotações" },
+    }),
+  );
+  await expect(
+    moveLeadStage(other, lead.id, { stage: "PROPOSAL", expectedStage: "NEW" }),
+  ).rejects.toMatchObject({ code: "NOT_FOUND" });
+  await expect(
+    moveLeadStage(viewer, lead.id, { stage: "PROPOSAL", expectedStage: "NEW" }),
+  ).rejects.toMatchObject({ code: "FORBIDDEN" });
+  await moveLeadStage(actor, lead.id, {
+    stage: "PROPOSAL",
+    expectedStage: "NEW",
+  });
+  const proposal = await getLead(actor, lead.id);
+  expect(proposal.proposalAt).not.toBeNull();
+  expect(proposal.notes).toBe("Manter estas anotações");
+  await expect(
+    moveLeadStage(actor, lead.id, { stage: "LOST", expectedStage: "NEW" }),
+  ).rejects.toMatchObject({ code: "CONFLICT" });
+  await moveLeadStage(actor, lead.id, {
+    stage: "WON",
+    expectedStage: "PROPOSAL",
+  });
+  const won = await getLead(actor, lead.id);
+  expect(won.wonAt).not.toBeNull();
+  await moveLeadStage(actor, lead.id, { stage: "NEW", expectedStage: "WON" });
+  const reopened = await getLead(actor, lead.id);
+  expect(reopened.proposalAt).toEqual(proposal.proposalAt);
+  expect(reopened.wonAt).toEqual(won.wonAt);
+  expect(reopened.notes).toBe(proposal.notes);
+});
+it("lists every sale or rental across pages without requiring location or text", async () => {
+  const prefix = `pagination-${randomUUID()}`;
+  await withTenant(actor, "property:create", (tx) =>
+    tx.property.createMany({
+      data: Array.from({ length: 28 }, (_, i) => ({
+        organizationId: org,
+        title: `${prefix} ${i}`,
+        slug: `${prefix}-${i}`,
+        status: "PUBLISHED" as const,
+        purpose: i < 14 ? ("RENT" as const) : ("SALE" as const),
+        city: "Campinas",
+        area: 100,
+        priceCents: 100000 + i,
+        isDemo: true,
+      })),
+    }),
+  );
+  const first = await searchMarketplace(
+    searchSchema.parse({ q: prefix, purpose: "RENT", sort: "price-asc" }),
+  );
+  const second = await searchMarketplace(
+    searchSchema.parse({
+      q: prefix,
+      purpose: "RENT",
+      sort: "price-asc",
+      page: 2,
+    }),
+  );
+  expect(first.total).toBe(14);
+  expect(first.items).toHaveLength(12);
+  expect(second.items).toHaveLength(2);
+  expect(
+    new Set([...first.items, ...second.items].map((p) => p.slug)).size,
+  ).toBe(14);
+  const rentals = await searchMarketplace(
+    searchSchema.parse({ purpose: "RENT" }),
+  );
+  const sales = await searchMarketplace(
+    searchSchema.parse({ purpose: "SALE" }),
+  );
+  expect(rentals.total).toBeGreaterThanOrEqual(14);
+  expect(rentals.items.every((p) => p.purpose === "RENT")).toBe(true);
+  expect(sales.total).toBeGreaterThanOrEqual(14);
+  expect(sales.items.every((p) => p.purpose === "SALE")).toBe(true);
 });

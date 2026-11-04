@@ -38,6 +38,12 @@ export function PublicPresentation({
     <>
       <SiteHeader />
       <main id="conteudo" className="container public-property">
+        {!demo && property.isDemo && (
+          <p className="notice">
+            Imóvel demonstrativo · Este cadastro é fictício. As imagens e os
+            valores são ilustrativos e não representam uma oferta real.
+          </p>
+        )}
         {tours.map((tour) => (
           <section key={tour.id} aria-label={tour.title}>
             <h2>{tour.title}</h2>
@@ -106,8 +112,8 @@ export function PublicPresentation({
               {!property.forSale && !demo && <small> /mês</small>}
             </strong>
             <ShareButton />
-            {demo ? (
-              <ButtonLink href="/contato">Conhecer o ImobView ↗</ButtonLink>
+            {demo || property.isDemo ? (
+              <ButtonLink href="/buscar">Explorar outros imóveis ↗</ButtonLink>
             ) : (
               <div>
                 {contact && (
@@ -136,7 +142,7 @@ export function PublicPresentation({
                 )}
               </div>
             )}
-            {!demo && (
+            {!demo && !property.isDemo && (
               <InterestForm
                 slug={property.slug}
                 agency={property.organizationName}

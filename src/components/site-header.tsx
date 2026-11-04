@@ -9,6 +9,7 @@ export function SiteHeader() {
       <div className="container header-inner">
         <Brand />
         <nav className="desktop-nav" aria-label="Menu principal">
+          <Link href="/buscar">Todos os imóveis</Link>
           <Link href="/buscar?purpose=SALE">Comprar</Link>
           <Link href="/buscar?purpose=RENT">Alugar</Link>
           <Link href="/para-imobiliarias">Para imobiliárias</Link>
@@ -27,6 +28,7 @@ export function SiteHeader() {
             <Menu />
           </summary>
           <nav aria-label="Menu móvel">
+            <Link href="/buscar">Todos os imóveis</Link>
             <Link href="/buscar?purpose=SALE">Comprar imóvel</Link>
             <Link href="/buscar?purpose=RENT">Alugar imóvel</Link>
             <Link href="/para-imobiliarias">Para imobiliárias</Link>

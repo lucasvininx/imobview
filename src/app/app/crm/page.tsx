@@ -4,22 +4,7 @@ import { can } from "@/domain/permissions";
 import { PageHeader, ButtonLink } from "@/components/ui";
 import { listLeads } from "@/features/leads/service";
 import { stageLabels, stageSchema } from "@/features/leads/schema";
-import { InterestBadge } from "@/features/leads/interest";
-const columns = [
-  {
-    title: "Novos contatos",
-    stages: ["NEW", "TOUR_STARTED", "TOUR_COMPLETED"],
-    color: "blue",
-  },
-  {
-    title: "Em atendimento",
-    stages: ["INTERESTED", "VISIT_REQUESTED"],
-    color: "amber",
-  },
-  { title: "Negociação", stages: ["NEGOTIATION", "PROPOSAL"], color: "purple" },
-  { title: "Fechados", stages: ["WON"], color: "green" },
-  { title: "Perdidos", stages: ["LOST"], color: "gray" },
-];
+import { CrmBoard } from "@/features/leads/crm-board";
 export default async function Page({
   searchParams,
 }: {
@@ -101,54 +86,21 @@ export default async function Page({
           Limpar
         </Link>
       </form>
-      <div className="crm-board">
-        {columns.map((column) => {
-          const items = leads.filter((lead) =>
-            column.stages.includes(lead.stage),
-          );
-          return (
-            <section
-              className={`crm-column crm-${column.color}`}
-              key={column.title}
-            >
-              <h2>
-                <span className="crm-dot" />
-                {column.title}
-                <small>{items.length}</small>
-              </h2>
-              {items.length ? (
-                items.map((lead) => (
-                  <article className="crm-card" key={lead.id}>
-                    <div className="lead-card-top">
-                      <span className="listing-type">
-                        {stageLabels[stageSchema.parse(lead.stage)]}
-                      </span>
-                      <InterestBadge interest={lead.interest} />
-                    </div>
-                    <h3>
-                      <Link href={`/app/leads/${lead.id}`}>{lead.name}</Link>
-                    </h3>
-                    <p>{lead.property?.title ?? "Imóvel a definir"}</p>
-                    <span>{lead.broker?.name ?? "Atribuir responsável"}</span>
-                    <Link
-                      className="text-link"
-                      href={`/app/leads/${lead.id}#atendimento`}
-                    >
-                      Atualizar atendimento ↗
-                    </Link>
-                  </article>
-                ))
-              ) : (
-                <p className="crm-empty">Nenhum contato nesta etapa.</p>
-              )}
-            </section>
-          );
-        })}
-      </div>
+      <CrmBoard
+        canMove={can(membership.role, "lead:update")}
+        leads={leads.map((lead) => ({
+          id: lead.id,
+          name: lead.name,
+          stage: stageSchema.parse(lead.stage),
+          property: lead.property?.title ?? "Imóvel a definir",
+          broker: lead.broker?.name ?? "Atribuir responsável",
+          interest: lead.interest,
+        }))}
+      />
       <p className="muted">
-        Exibindo até 200 contatos com atividade mais recente. Abra o atendimento
-        para alterar etapa, corretor e anotações. Todos os clientes estão
-        disponíveis na aba Leads.
+        Exibindo até 200 contatos com atividade mais recente. Arraste para mudar
+        a etapa ou use o seletor do cartão. Todos os clientes estão disponíveis
+        na aba Leads.
       </p>
     </>
   );

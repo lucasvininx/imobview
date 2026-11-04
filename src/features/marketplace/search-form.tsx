@@ -1,32 +1,34 @@
 import { Search, SlidersHorizontal, Sparkles } from "lucide-react";
 import type { SearchInput } from "./search";
+import Link from "next/link";
 export function SearchForm({ values }: { values?: SearchInput }) {
   return (
     <form action="/buscar" className="market-search">
       <div
         className="search-purpose"
-        role="group"
-        aria-label="Finalidade do imóvel"
+        role="navigation"
+        aria-label="Catálogo de imóveis"
       >
         {[
           ["", "Todos"],
           ["SALE", "Comprar"],
           ["RENT", "Alugar"],
         ].map(([value, label]) => (
-          <label key={value}>
-            <input
-              type="radio"
-              name="purpose"
-              value={value}
-              defaultChecked={(values?.purpose ?? "") === value}
-            />
-            <span>{label}</span>
-          </label>
+          <Link
+            key={value}
+            href={value ? `/buscar?purpose=${value}` : "/buscar"}
+            aria-current={
+              (values?.purpose ?? "") === value ? "page" : undefined
+            }
+          >
+            {label}
+          </Link>
         ))}
         <span className="search-intelligence">
           <Sparkles size={14} /> Busca inteligente ImobView
         </span>
       </div>
+      <input type="hidden" name="purpose" value={values?.purpose ?? ""} />
       <div className="search-main">
         <Search size={23} />
         <label className="search-query">

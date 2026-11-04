@@ -59,8 +59,18 @@ export default async function Page({
       <SiteHeader />
       <main id="conteudo" className="container marketplace search-page">
         <p className="eyebrow">SEU PRÓXIMO LUGAR</p>
-        <h1>Encontre o imóvel que faz sentido para você.</h1>
-        <SearchForm values={input} />
+        <h1>
+          {input.purpose === "RENT"
+            ? "Imóveis para alugar"
+            : input.purpose === "SALE"
+              ? "Imóveis à venda"
+              : "Todos os imóveis"}
+        </h1>
+        <p>
+          Explore a lista completa ou refine por cidade, bairro e
+          características.
+        </p>
+        <SearchForm key={JSON.stringify(input)} values={input} />
         {!parsed.success && (
           <p className="form-error" role="alert">
             Confira os filtros da busca. Use valores positivos e uma descrição
@@ -77,19 +87,27 @@ export default async function Page({
                     ? "imóvel encontrado"
                     : "imóveis encontrados"}
                 </h2>
-                <p>Ofertas publicadas por imobiliárias e corretores.</p>
+                <p>
+                  {input.purpose === "RENT"
+                    ? "Todos os imóveis publicados para locação."
+                    : input.purpose === "SALE"
+                      ? "Todos os imóveis publicados para compra."
+                      : "Imóveis publicados por imobiliárias e corretores."}
+                </p>
               </div>
-              <Link className="text-link" href="/buscar">
+              <Link
+                className="text-link"
+                href={
+                  input.purpose ? `/buscar?purpose=${input.purpose}` : "/buscar"
+                }
+              >
                 Limpar busca
               </Link>
             </div>
             {!!chips.length && (
               <div className="interpreted-filters">
                 <span>
-                  <Sparkles size={15} />{" "}
-                  {result.engine === "ai"
-                    ? "Critérios interpretados por IA"
-                    : "Critérios aplicados"}
+                  <Sparkles size={15} /> Critérios aplicados
                 </span>
                 {chips.map((chip, i) => (
                   <span className="filter-chip" key={i}>
@@ -97,6 +115,12 @@ export default async function Page({
                   </span>
                 ))}
               </div>
+            )}
+            {result.items.some((item) => item.isDemo) && (
+              <p className="catalog-demo-note">
+                Os imóveis com selo “Demonstração” são fictícios e servem para
+                explorar o sistema. Valores e imagens são ilustrativos.
+              </p>
             )}
             {result.items.length ? (
               <div className="listing-grid">

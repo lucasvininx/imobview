@@ -18,6 +18,7 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "prisma db seed",
+    "db:seed-marketplace": "node scripts/seed-marketplace.mjs",
     "db:dev": "prisma migrate dev",
     "postinstall": "prisma generate",
     "setup:env": "node scripts/setup-env.mjs",

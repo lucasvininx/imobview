@@ -25,6 +25,7 @@ const publicSchema = z.object({
   suites: z.number().default(0),
   forSale: z.boolean().default(false),
   financingRateBps: z.number().default(1150),
+  isDemo: z.boolean().optional(),
 });
 export type PublicProperty = z.infer<typeof publicSchema>;
 export async function getPublicProperty(slug: string) {
@@ -33,6 +34,9 @@ export async function getPublicProperty(slug: string) {
     unknown[]
   >`SELECT * FROM public.get_published_property(${slug})`;
   if (!rows[0]) return null;
+  const [flags] = await db.$queryRaw<
+    { isDemo: boolean }[]
+  >`SELECT * FROM public.get_public_property_flags(${slug})`;
   const [extra] = await db.$queryRaw<
     unknown[]
   >`SELECT * FROM public.get_property_presentation(${slug})`;
@@ -60,6 +64,7 @@ export async function getPublicProperty(slug: string) {
   );
   return {
     ...publicSchema.parse(rows[0]),
+    isDemo: flags?.isDemo ?? false,
     captureLeads: settings?.captureLeads ?? false,
     internalCode: settings?.internalCode ?? "",
     condominium: settings?.condominium ?? "",

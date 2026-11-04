@@ -46,6 +46,9 @@ export function ListingCard({ listing: p }: { listing: Listing }) {
         )}
       </div>
       <div className="listing-body">
+        {p.isDemo && (
+          <span className="profile-badge catalog-demo-badge">Demonstração</span>
+        )}
         <span className="listing-type">{types[p.type]}</span>
         <h3>{p.title}</h3>
         <p className="listing-location">

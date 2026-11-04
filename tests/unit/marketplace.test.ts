@@ -8,6 +8,24 @@ import {
 const search = (q: string, rest = {}) =>
   interpretSearch(searchSchema.parse({ q, ...rest }));
 describe("marketplace language search", () => {
+  it("supports browsing without a query and the user's simple local search", () => {
+    expect(search("", { purpose: "RENT" })).toMatchObject({
+      purpose: "RENT",
+      city: "",
+      tokens: [],
+    });
+    expect(search("casa em Campinas")).toMatchObject({
+      type: "HOUSE",
+      city: "campinas",
+      tokens: [],
+    });
+    expect(search("casas para alugar em Campinas")).toMatchObject({
+      type: "HOUSE",
+      purpose: "RENT",
+      city: "campinas",
+      tokens: [],
+    });
+  });
   it("understands the requested Campinas example without losing location", () => {
     expect(
       search(

@@ -6,12 +6,29 @@ import {
   deleteLead,
   updateRequest,
   saveLeadProfile,
+  moveLeadStage,
 } from "./service";
 import { z } from "zod";
 import { DomainError } from "@/domain/errors";
 import { after } from "next/server";
 import { deliverWhatsApp } from "@/features/notifications/whatsapp";
 import { logError } from "@/server/logger";
+export async function moveLeadStageAction(id: string, input: unknown) {
+  const { actor } = await requireWorkspace();
+  try {
+    await moveLeadStage(actor, id, input);
+    revalidatePath("/app", "layout");
+    return { success: true as const };
+  } catch (error) {
+    return {
+      success: false as const,
+      error:
+        error instanceof DomainError
+          ? error.message
+          : "Não foi possível mover o lead. Tente novamente.",
+    };
+  }
+}
 export async function saveLeadProfileAction(input: unknown, id?: string) {
   const { actor } = await requireWorkspace();
   try {
