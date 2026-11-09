@@ -22,7 +22,7 @@ export async function sendBusinessMessage(input: unknown) {
     return {
       success: false as const,
       error:
-        "O envio está indisponível no momento. Fale com a equipe pelo Instagram.",
+        "Não foi possível enviar sua mensagem. Tente novamente em instantes.",
     };
   try {
     const h = await headers();
@@ -63,7 +63,7 @@ export async function sendBusinessMessage(input: unknown) {
     return {
       success: false as const,
       error:
-        "Não foi possível enviar sua mensagem. Tente novamente em instantes ou fale conosco pelo Instagram.",
+        "Não foi possível enviar sua mensagem. Tente novamente em instantes.",
     };
   }
 }

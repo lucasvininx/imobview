@@ -61,14 +61,14 @@ export default function Home() {
             <div className="home-search">
               <SearchForm />
             </div>
-            <div className="market-hero-note">
-              <Scan size={20} />
-              <span>
-                Conheça por dentro.
-                <br />
-                <strong>Explore imóveis com tour 360°.</strong>
-              </span>
-            </div>
+          </div>
+          <div className="market-hero-note">
+            <Scan size={20} />
+            <span>
+              Conheça por dentro.
+              <br />
+              <strong>Explore imóveis com tour 360°.</strong>
+            </span>
           </div>
           <div className="market-hero-photo">
             <Image

@@ -20,7 +20,7 @@ export async function GET(request: Request) {
   const pending = store.get("imobview.google-oauth")?.value;
   const finish = (result: string) => {
     const response = NextResponse.redirect(
-      new URL(`/app/integracoes?google=${result}`, base),
+      new URL(`/app/integracoes/google?google=${result}`, base),
     );
     response.cookies.set("imobview.google-oauth", "", {
       httpOnly: true,

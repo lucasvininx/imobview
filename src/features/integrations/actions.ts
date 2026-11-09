@@ -82,7 +82,7 @@ export async function saveIntegrationAction(provider: string, input: unknown) {
   const { actor, user } = await requireWorkspace();
   try {
     const result = await saveIntegration(actor, provider, input, user.email);
-    revalidatePath("/app/integracoes");
+    revalidatePath("/app/integracoes", "layout");
     revalidatePath("/app/configuracoes");
     return { success: true as const, ...result };
   } catch (error) {
@@ -93,7 +93,7 @@ export async function disableIntegrationAction(provider: string) {
   const { actor } = await requireWorkspace();
   try {
     await disableIntegration(actor, provider);
-    revalidatePath("/app/integracoes");
+    revalidatePath("/app/integracoes", "layout");
     return { success: true as const };
   } catch (error) {
     return failure(error);
@@ -103,7 +103,7 @@ export async function disconnectCalendarAction() {
   const { actor } = await requireWorkspace();
   try {
     await disconnectCalendar(actor);
-    revalidatePath("/app/integracoes");
+    revalidatePath("/app/integracoes", "layout");
     return { success: true as const };
   } catch (error) {
     return failure(error);
@@ -121,7 +121,7 @@ export async function selectCalendarAction(id: string) {
   const { actor } = await requireWorkspace();
   try {
     await selectCalendar(actor, id);
-    revalidatePath("/app/integracoes");
+    revalidatePath("/app/integracoes", "layout");
     return { success: true as const };
   } catch (error) {
     return failure(error);
@@ -157,7 +157,7 @@ export async function retryIntegrationsAction() {
     after(async () => {
       await deliverIntegrations(actor.organizationId);
     });
-    revalidatePath("/app/integracoes");
+    revalidatePath("/app/integracoes", "layout");
     return { success: true as const };
   } catch (error) {
     return failure(error);

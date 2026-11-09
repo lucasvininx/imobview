@@ -1,7 +1,9 @@
 # Integrações por imobiliária
 
-A configuração fica em **Integrações** (`/app/integracoes`), com instruções na
-própria tela. Proprietários e administradores configuram as credenciais da
+A configuração começa em **Integrações** (`/app/integracoes`). Cada serviço tem
+sua própria página: `/app/integracoes/google`, `/app/integracoes/whatsapp` e
+`/app/integracoes/email`, com instruções e histórico do respectivo canal.
+Proprietários e administradores configuram as credenciais da
 imobiliária. Profissionais com permissão de atendimento autorizam sua própria
 conta Google e escolhem uma agenda com permissão de edição.
 

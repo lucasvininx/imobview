@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Brand } from "./brand";
-import { Camera } from "lucide-react";
+import { InstagramIcon } from "./instagram-icon";
 export function SiteFooter() {
   return (
     <footer className="site-footer container">
@@ -9,13 +9,13 @@ export function SiteFooter() {
           <Brand />
           <p>Uma nova perspectiva para cada imóvel.</p>
           <a
-            className="footer-instagram"
+            className="footer-instagram social-icon-link"
             href="https://www.instagram.com/imobview_/"
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Instagram da ImobView: @imobview_ (abre em nova aba)"
+            aria-label="Instagram da ImobView (abre em nova aba)"
           >
-            <Camera size={17} /> @imobview_
+            <InstagramIcon />
           </a>
         </div>
         <nav aria-label="Rodapé">

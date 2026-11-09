@@ -3,7 +3,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { ButtonLink } from "@/components/ui";
 import { BusinessContactForm } from "@/features/contact/form";
-import { Camera } from "lucide-react";
+import { InstagramIcon } from "@/components/instagram-icon";
 export const metadata = { title: "Vamos conversar" };
 export default function Page() {
   const contact = businessContact();
@@ -43,20 +43,15 @@ export default function Page() {
             <a href={`mailto:${contact.email}`}>{contact.email}</a>
           </p>
         )}
-        {!contact.whatsapp && !contact.email && (
-          <p>
-            Enquanto o atendimento por e-mail é preparado, converse com a nossa
-            equipe pelo Instagram.
-          </p>
-        )}
         <p>
           <a
-            className="button button-secondary"
+            className="social-icon-link"
             href="https://www.instagram.com/imobview_/"
             target="_blank"
             rel="noopener noreferrer"
+            aria-label="Instagram da ImobView (abre em nova aba)"
           >
-            <Camera size={18} /> Falar com a ImobView no Instagram
+            <InstagramIcon />
           </a>
         </p>
         {contact.email &&

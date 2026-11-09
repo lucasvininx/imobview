@@ -20,6 +20,17 @@ test("home opens at the top with search visible and preserves the document on se
       .locator(".home-search")
       .getByRole("button", { name: "Encontrar imóvel", exact: true });
     await expect(button).toBeInViewport();
+    if (width > 760) {
+      const photo = await page.locator(".market-hero-photo").boundingBox();
+      const search = await page.locator(".home-search").boundingBox();
+      expect(
+        Math.abs(photo!.y + photo!.height - search!.y - search!.height),
+      ).toBeLessThan(2);
+    }
+    await page.screenshot({
+      path: `test-results/home-polished-${width}.png`,
+      fullPage: true,
+    });
   }
   await page.evaluate(() => {
     document.documentElement.dataset.navigationMarker = "same-document";
@@ -42,6 +53,12 @@ test("home opens at the top with search visible and preserves the document on se
     "href",
     "https://www.instagram.com/imobview_/",
   );
+  await expect(page.locator(".footer-instagram")).toHaveText("");
+  await page.goto("/contato");
+  await expect(page.getByText(/Enquanto o atendimento por e-mail/)).toHaveCount(
+    0,
+  );
+  await expect(page.locator("main .social-icon-link")).toHaveText("");
 });
 
 test("a rental without a tour offers contact independently of financing or agency channels", async ({

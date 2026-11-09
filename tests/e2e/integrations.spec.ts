@@ -36,13 +36,52 @@ test("agency follows integration guides, protects Google OAuth state and schedul
     await expect(
       page.getByRole("heading", { name: "Integrações", exact: true }),
     ).toBeVisible();
-    for (const text of [
-      "Passo a passo para conectar o Google Agenda",
-      "Passo a passo para conectar o WhatsApp",
-      "Passo a passo para conectar o e-mail",
-    ]) {
-      await page.getByText(text, { exact: true }).click();
+    await expect(page.locator(".integration-service")).toHaveCount(3);
+    await expect(page.locator(".integration-form")).toHaveCount(0);
+    for (const width of [1440, 390]) {
+      await page.setViewportSize({ width, height: 960 });
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      ).toBe(true);
+      await page.screenshot({
+        path: `test-results/integration-hub-${width}.png`,
+        fullPage: true,
+      });
     }
+    for (const [title, slug, text] of [
+      [
+        "Google Agenda",
+        "google",
+        "Passo a passo para conectar o Google Agenda",
+      ],
+      [
+        "WhatsApp Business",
+        "whatsapp",
+        "Passo a passo para conectar o WhatsApp",
+      ],
+      ["E-mail com Resend", "email", "Passo a passo para conectar o e-mail"],
+    ]) {
+      await page
+        .getByRole("link", { name: `Configurar ${title}`, exact: true })
+        .click();
+      await expect(page).toHaveURL(new RegExp(`/app/integracoes/${slug}$`));
+      await expect(
+        page.getByRole("heading", { name: title, level: 1 }),
+      ).toBeVisible();
+      await expect(page.locator(".integration-card")).toHaveCount(1);
+      await page.getByText(text, { exact: true }).click();
+      await page
+        .getByRole("link", { name: "Todas as integrações", exact: true })
+        .click();
+    }
+    await page
+      .getByRole("link", { name: "Configurar Google Agenda", exact: true })
+      .click();
+    await page
+      .getByText("Passo a passo para conectar o Google Agenda", { exact: true })
+      .click();
     await expect(
       page.getByText(/Uma chave de API isolada não autoriza/),
     ).toBeVisible();

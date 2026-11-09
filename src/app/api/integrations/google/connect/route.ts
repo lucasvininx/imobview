@@ -14,7 +14,7 @@ export async function GET() {
     const settings = await getSettings<GoogleSettings>(actor, "GOOGLE");
     if (!settings?.enabled)
       return NextResponse.redirect(
-        new URL("/app/integracoes?google=setup", base),
+        new URL("/app/integracoes/google?google=setup", base),
       );
     const state = randomBytes(32).toString("base64url"),
       verifier = randomBytes(48).toString("base64url");
@@ -48,7 +48,7 @@ export async function GET() {
     return response;
   } catch {
     return NextResponse.redirect(
-      new URL("/app/integracoes?google=error", base),
+      new URL("/app/integracoes/google?google=error", base),
     );
   }
 }

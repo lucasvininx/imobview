@@ -2,7 +2,7 @@ import "server-only";
 import { z } from "zod";
 import { withTenant, type Actor } from "@/server/tenant";
 
-export function listNotifications(actor: Actor) {
+export function listNotifications(actor: Actor, unreadOnly = false) {
   return withTenant(actor, "lead:read", async (tx) => {
     const where = {
       organizationId: actor.organizationId,
@@ -10,8 +10,8 @@ export function listNotifications(actor: Actor) {
     };
     const [items, unread] = await Promise.all([
       tx.notification.findMany({
-        where,
-        orderBy: { createdAt: "desc" },
+        where: { ...where, ...(unreadOnly ? { readAt: null } : {}) },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         take: 30,
       }),
       tx.notification.count({ where: { ...where, readAt: null } }),
