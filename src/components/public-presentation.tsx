@@ -227,12 +227,10 @@ export function PublicPresentation({
           <ExteriorViewer config={exterior} title={property.title} />
         )}
         {canSimulate && (
-          <section id="financiamento" aria-label="Simulação de financiamento">
-            <FinancingSimulator
-              priceCents={Number(property.priceCents)}
-              defaultRateBps={property.financingRateBps}
-            />
-          </section>
+          <FinancingSimulator
+            priceCents={Number(property.priceCents)}
+            defaultRateBps={property.financingRateBps}
+          />
         )}
       </main>
       <SiteFooter />

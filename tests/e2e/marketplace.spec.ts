@@ -294,7 +294,7 @@ test("visitor searches published stock, sends interest and the agency completes 
     await page.getByLabel("Seu celular", { exact: true }).fill("11999999999");
     await page.getByLabel(/Autorizo o envio dos meus dados/).check();
     await page
-      .getByRole("button", { name: "Tenho interesse", exact: true })
+      .getByRole("button", { name: "Quero falar sobre o aluguel", exact: true })
       .click();
     await expect(page.getByRole("status")).toContainText("Interesse enviado!");
     await page.goto("/login");

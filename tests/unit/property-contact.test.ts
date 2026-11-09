@@ -71,3 +71,14 @@ it("identifies demonstration listings without sending fictitious leads", () => {
   expect(html).toContain("Este imóvel é demonstrativo");
   expect(html).not.toContain("Quero falar sobre o aluguel");
 });
+
+it("labels the financing region with one unique heading target", () => {
+  const html = renderToStaticMarkup(
+    createElement(PublicPresentation, {
+      property: { ...rental, forSale: true, priceCents: BigInt(50000000) },
+    }),
+  );
+  expect(html.match(/id="financiamento"/g)).toHaveLength(1);
+  expect(html).toContain('aria-labelledby="financiamento"');
+  expect(html).toContain("Simule o financiamento");
+});
