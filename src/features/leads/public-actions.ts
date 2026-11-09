@@ -9,6 +9,7 @@ import { hashToken } from "./public-service";
 import { deliverWhatsApp } from "@/features/notifications/whatsapp";
 import { after } from "next/server";
 import { logError } from "@/server/logger";
+import { deliverIntegrations } from "@/features/integrations/delivery";
 export async function beginVisitAction(input: unknown) {
   const h = await headers();
   // Vercel supplies this header; locally use one shared bucket instead of trusting arbitrary forwarding headers.
@@ -42,7 +43,13 @@ export async function requestVisitAction(token: unknown, input: unknown) {
     await requestVisit(token, input);
     after(async () => {
       try {
-        await deliverWhatsApp(hashToken(String(token)));
+        const outcomes = await Promise.allSettled([
+          deliverWhatsApp(hashToken(String(token))),
+          deliverIntegrations(),
+        ]);
+        for (const outcome of outcomes)
+          if (outcome.status === "rejected")
+            logError("visit.dispatch.failed", outcome.reason);
       } catch (error) {
         logError("whatsapp.dispatch.failed", error);
       }

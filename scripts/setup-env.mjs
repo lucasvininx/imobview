@@ -9,6 +9,10 @@ if (existsSync(".env")) {
       randomBytes(32).toString("hex"),
     )
     .replace(
+      "replace-with-an-integration-encryption-key",
+      randomBytes(32).toString("hex"),
+    )
+    .replace(
       "SEED_PASSWORD=",
       "SEED_PASSWORD=" + randomBytes(18).toString("base64url"),
     );

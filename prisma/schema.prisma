@@ -19,6 +19,7 @@ model User {
   accounts Account[]
   memberships OrganizationMember[]
   notifications Notification[]
+  calendarConnections CalendarConnection[]
 }
 
 model Session {
@@ -96,6 +97,11 @@ model Organization {
   tours Tour[]
   brokers Broker[]
   leads Lead[]
+  integrations OrganizationIntegration[]
+  calendarConnections CalendarConnection[]
+  integrationDeliveries IntegrationDelivery[]
+  integrationReceipts IntegrationReceipt[]
+  calendarBindings CalendarEventBinding[]
 }
 
 model OrganizationMember {
@@ -330,11 +336,87 @@ model VisitRequest {
   preferredDate String @db.VarChar(10)
   period String @db.VarChar(15)
   status String @default("REQUESTED") @db.VarChar(15)
+  scheduledStartAt DateTime? @db.Timestamptz(3)
+  scheduledEndAt DateTime? @db.Timestamptz(3)
+  timeZone String @default("America/Sao_Paulo") @db.VarChar(80)
+  calendarUserId String?
+  calendarTargetId String @default("")
+  scheduleRevision Int @default(1)
+  calendarEventUrl String @default("")
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
   deliveries WhatsAppDelivery[]
   @@unique([leadId, preferredDate, period])
   @@index([organizationId, status, preferredDate])
+}
+
+model OrganizationIntegration {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  provider String @db.VarChar(20)
+  secret String
+  config Json @default("{}")
+  enabled Boolean @default(false)
+  verifiedAt DateTime? @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  @@unique([organizationId, provider])
+}
+
+model CalendarConnection {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  secret String
+  accountEmail String @db.VarChar(254)
+  calendarId String @default("primary") @db.VarChar(1024)
+  calendarName String @default("Agenda principal") @db.VarChar(240)
+  connected Boolean @default(true)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  @@unique([organizationId, userId])
+}
+
+model IntegrationDelivery {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  requestId String @db.Uuid
+  channel String @db.VarChar(20)
+  revision Int
+  payload Json @default("{}")
+  state String @default("PENDING") @db.VarChar(20)
+  attempts Int @default(0)
+  lease String? @db.Uuid
+  availableAt DateTime @default(now()) @db.Timestamptz(3)
+  providerId String? @db.VarChar(1024)
+  lastError String? @db.VarChar(80)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  @@unique([organizationId, requestId, channel, revision])
+  @@index([state, availableAt])
+  @@index([organizationId, providerId])
+}
+
+model IntegrationReceipt {
+  organizationId String @db.Uuid
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  channel String @db.VarChar(20)
+  providerId String @db.VarChar(1024)
+  state String @db.VarChar(20)
+  occurredAt DateTime @db.Timestamptz(3)
+  @@id([organizationId, channel, providerId])
+}
+
+model CalendarEventBinding {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @db.Uuid
+  organization Organization @relation(fields:[organizationId], references:[id], onDelete:Cascade)
+  requestId String @db.Uuid
+  userId String
+  calendarId String @db.VarChar(1024)
+  @@unique([organizationId, requestId, userId, calendarId])
 }
 
 model PropertyPhoto {

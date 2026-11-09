@@ -10,6 +10,7 @@ import {
   ChartColumn,
   ContactRound,
   PanelsTopLeft,
+  Plug,
 } from "lucide-react";
 const links = [
   { href: "/app", label: "Visão geral", icon: LayoutDashboard },
@@ -19,6 +20,7 @@ const links = [
   { href: "/app/agenda", label: "Visitas", icon: CalendarDays },
   { href: "/app/analytics", label: "Analytics", icon: ChartColumn },
   { href: "/app/equipe", label: "Equipe", icon: Users },
+  { href: "/app/integracoes", label: "Integrações", icon: Plug },
   { href: "/app/configuracoes", label: "Configurações", icon: Settings },
 ];
 export function AppNavigation() {

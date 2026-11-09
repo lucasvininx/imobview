@@ -22,7 +22,7 @@ export async function withTenant<T>(
       });
       if (!membership || !can(membership.role, permission))
         throw new DomainError("FORBIDDEN", "Acesso não permitido.");
-      await tx.$executeRaw`SELECT set_config('app.organization_id', ${actor.organizationId}, true), set_config('app.user_id', ${actor.userId}, true)`;
+      await tx.$executeRaw`SELECT set_config('app.organization_id', ${actor.organizationId}, true), set_config('app.user_id', ${actor.userId}, true), set_config('TimeZone','UTC',true)`;
       return work(tx, membership.role);
     },
     { timeout },

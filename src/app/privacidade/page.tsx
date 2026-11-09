@@ -71,6 +71,17 @@ export default function Page() {
           contate a imobiliária que apresentou o imóvel. A equipe autorizada
           pode exportar e excluir seu cadastro e histórico no painel.
         </p>
+        <h2>Agenda e avisos de visitas</h2>
+        <p>
+          Quando a imobiliária habilita integrações, os dados necessários ao
+          agendamento e ao atendimento podem ser enviados ao Google Agenda, ao
+          WhatsApp Business da Meta e ao Resend, conforme os canais
+          configurados. A conexão com o Google depende da autorização da conta
+          do profissional. A imobiliária escolhe os destinatários dos avisos de
+          visitas. O titular da conta Google pode desconectar ou revogar esse
+          acesso. Credenciais de integração ficam criptografadas e não aparecem
+          em páginas públicas.
+        </p>
         <h2>Antes da abertura comercial</h2>
         <p>
           A identificação do controlador, o canal para solicitações de

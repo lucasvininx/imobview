@@ -73,7 +73,7 @@ export function DistributionForm({
       <p className="muted">
         {whatsappReady
           ? "Integração WhatsApp configurada. Sem corretor ativo atribuído, o aviso vai para o WhatsApp da imobiliária."
-          : "Para ativar, configure as credenciais e o modelo de mensagem do WhatsApp Business no servidor."}
+          : "Para ativar, abra Integrações e siga o passo a passo do WhatsApp Business."}
       </p>
       <Button disabled={busy}>
         {busy ? "Salvando…" : "Salvar distribuição e avisos"}

@@ -13,6 +13,7 @@ import { DomainError } from "@/domain/errors";
 import { after } from "next/server";
 import { deliverWhatsApp } from "@/features/notifications/whatsapp";
 import { logError } from "@/server/logger";
+import { deliverIntegrations } from "@/features/integrations/delivery";
 export async function moveLeadStageAction(id: string, input: unknown) {
   const { actor } = await requireWorkspace();
   try {
@@ -84,7 +85,13 @@ export async function requestStatusAction(id: string, status: string) {
     await updateRequest(actor, id, status);
     after(async () => {
       try {
-        await deliverWhatsApp();
+        const outcomes = await Promise.allSettled([
+          deliverWhatsApp(),
+          deliverIntegrations(actor.organizationId, id),
+        ]);
+        for (const outcome of outcomes)
+          if (outcome.status === "rejected")
+            logError("visit.dispatch.failed", outcome.reason);
       } catch (error) {
         logError("whatsapp.dispatch.failed", error);
       }

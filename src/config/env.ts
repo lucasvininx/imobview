@@ -6,15 +6,18 @@ export const envSchema = z
       .url()
       .refine((url) => url.startsWith("postgresql://"), "Use PostgreSQL"),
     NEXT_PUBLIC_APP_URL: z.url(),
-    DATABASE_CA_CERT: z
-      .string()
-      .refine(
-        (value) =>
-          value.includes("-----BEGIN CERTIFICATE-----") &&
-          value.includes("-----END CERTIFICATE-----"),
-        "Use a PEM certificate",
-      )
-      .optional(),
+    DATABASE_CA_CERT: z.preprocess(
+      (value) => (value === "" ? undefined : value),
+      z
+        .string()
+        .refine(
+          (value) =>
+            value.includes("-----BEGIN CERTIFICATE-----") &&
+            value.includes("-----END CERTIFICATE-----"),
+          "Use a PEM certificate",
+        )
+        .optional(),
+    ),
     BETTER_AUTH_SECRET: z
       .string()
       .min(32)

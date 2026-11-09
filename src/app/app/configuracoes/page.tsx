@@ -9,17 +9,37 @@ import { withTenant } from "@/server/tenant";
 import { organizationUsage } from "@/domain/entitlements";
 import { DistributionForm } from "@/features/organizations/distribution-form";
 import { whatsappConfigured } from "@/features/notifications/whatsapp";
+import Link from "next/link";
 export default async function Page() {
   const { actor, membership, memberships, user } = await requireWorkspace();
   const usage = await withTenant(actor, "property:read", (tx) =>
     organizationUsage(tx, actor.organizationId),
   );
+  const tenantWhatsApp = can(membership.role, "organization:manage")
+    ? await withTenant(actor, "organization:manage", (tx) =>
+        tx.organizationIntegration.findUnique({
+          where: {
+            organizationId_provider: {
+              organizationId: actor.organizationId,
+              provider: "WHATSAPP",
+            },
+          },
+          select: { enabled: true },
+        }),
+      )
+    : null;
   return (
     <>
       <PageHeader
         title="Configurações"
         description="Seu perfil e seus espaços de trabalho."
       />
+      <p className="notice">
+        <Link href="/app/integracoes">
+          Configurar integrações com Google Agenda, WhatsApp e e-mail — passo a
+          passo ↗
+        </Link>
+      </p>
       <div className="form-card">
         {can(membership.role, "organization:manage") && (
           <>
@@ -28,7 +48,9 @@ export default async function Page() {
             <DistributionForm
               mode={usage.organization.leadDistribution}
               alerts={usage.organization.whatsappVisitAlerts}
-              whatsappReady={whatsappConfigured()}
+              whatsappReady={
+                Boolean(tenantWhatsApp?.enabled) || whatsappConfigured()
+              }
             />
           </>
         )}

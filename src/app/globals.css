@@ -3998,6 +3998,129 @@ html[data-theme="light"] .site-footer {
     width: 100%;
   }
 }
+.integrations-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  align-items: start;
+  margin-block: 24px;
+}
+.integration-card {
+  min-width: 0;
+  margin: 0;
+}
+.integration-card:last-child {
+  grid-column: 1 / -1;
+}
+.integration-card > svg,
+.integration-history > svg {
+  color: var(--green);
+}
+.integration-card > h2 {
+  margin-top: 18px;
+}
+.integration-card p,
+.integration-form p,
+.integration-guide li {
+  font-size: 13px;
+  line-height: 1.8;
+}
+.integration-form fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.integration-form .form-grid {
+  grid-template-columns: minmax(0, 1fr);
+  margin-block: 24px;
+}
+.integration-card:last-child .integration-form .form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.integration-form input {
+  min-width: 0;
+  width: 100%;
+}
+.integration-form .check-field input {
+  width: auto;
+}
+.integration-guide {
+  border-block: 1px solid var(--border);
+  padding-block: 16px;
+  margin-block: 20px;
+}
+.integration-guide summary,
+.calendar-controls summary,
+.schedule-editor summary {
+  font-weight: 600;
+  line-height: 1.8;
+  padding-block: 6px;
+}
+.integration-guide ol {
+  display: grid;
+  gap: 16px;
+  padding-left: 22px;
+  margin-block: 20px;
+}
+.integration-guide code {
+  display: block;
+  background: var(--surface-raised);
+  padding: 10px 12px;
+  border-radius: 6px;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  font-size: 12px;
+  margin-block: 10px;
+}
+.integration-guide a,
+.calendar-controls a:not(.button),
+.visit-schedule-form a {
+  color: var(--green);
+  text-decoration: underline;
+}
+.calendar-controls > .button,
+.calendar-controls > form,
+.calendar-controls details,
+.visit-schedule-form {
+  margin-block: 18px;
+}
+.calendar-controls select {
+  margin-bottom: 14px;
+}
+.integration-history table {
+  min-width: 640px;
+  width: 100%;
+}
+.integration-history th,
+.integration-history td {
+  font-size: 12px;
+  padding: 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  line-height: 1.6;
+}
+.visit-schedule-form .form-grid {
+  grid-template-columns: 1fr;
+}
+.visit-schedule-form .field {
+  margin-block: 14px;
+}
+.schedule-editor {
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+  margin-top: 20px;
+}
+@media (max-width: 1100px) {
+  .integrations-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 600px) {
+  .integration-card:last-child .integration-form .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
 .profile-fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
