@@ -114,7 +114,7 @@ test("notification inbox filters older unread items, persists read state and sta
     await expect(
       panel.getByText("Retorno antigo não lido", { exact: true }),
     ).toHaveCount(0);
-    for (const width of [1440, 390]) {
+    for (const width of [1440, 768, 610, 601, 390]) {
       await page.setViewportSize({ width, height: 844 });
       const bounds = await panel.boundingBox();
       expect(bounds!.x).toBeGreaterThanOrEqual(0);
@@ -130,6 +130,15 @@ test("notification inbox filters older unread items, persists read state and sta
         path: `test-results/notifications-${width}.png`,
       });
     }
+    await page.keyboard.press("Escape");
+    await page
+      .getByRole("button", { name: "Ativar modo escuro", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "Notificações: 2 não lidas", exact: true })
+      .click();
+    await expect(panel).toBeVisible();
+    await page.screenshot({ path: "test-results/notifications-dark-390.png" });
     await panel.getByRole("button", { name: "Não lidas", exact: true }).click();
     await expect(
       panel.getByText("Retorno antigo não lido", { exact: true }),
