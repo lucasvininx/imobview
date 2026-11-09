@@ -48,7 +48,11 @@ export function PublicJourney({
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [requested, setRequested] = useState(false);
-  const journey = useJourney(token, tracking, unlocked?.scenes.length ?? 0);
+  const { attachTour, sceneChanged, hotspot, detail, stop } = useJourney(
+    token,
+    tracking,
+    unlocked?.scenes.length ?? 0,
+  );
   const storageKey = `imobview.visitor.${slug}`;
   const hydrated = useHydrated();
   const [forgotten, setForgotten] = useState(false);
@@ -87,7 +91,7 @@ export function PublicJourney({
       }
       const key = result.returnKey ?? returnKey;
       if (key) writeSaved(storageKey, { key, tracking: measure });
-      journey.stop();
+      stop();
       setToken(result.token);
       setTracking(measure);
       setUnlocked(result.tour);
@@ -210,15 +214,17 @@ export function PublicJourney({
         </form>
       )}
       {unlocked && (
-        <TourViewer
-          key={token ?? "anonymous"}
-          scenes={unlocked.scenes}
-          floorPlans={unlocked.floorPlans}
-          initialSceneId={unlocked.initialSceneId}
-          onSceneChange={journey.sceneChanged}
-          onHotspot={journey.hotspot}
-          onInfo={journey.detail}
-        />
+        <div ref={attachTour}>
+          <TourViewer
+            key={token ?? "anonymous"}
+            scenes={unlocked.scenes}
+            floorPlans={unlocked.floorPlans}
+            initialSceneId={unlocked.initialSceneId}
+            onSceneChange={sceneChanged}
+            onHotspot={hotspot}
+            onInfo={detail}
+          />
+        </div>
       )}
       {unlocked && (
         <div className="journey-controls">
@@ -226,7 +232,7 @@ export function PublicJourney({
             <Button
               variant="quiet"
               onClick={() => {
-                journey.stop();
+                stop();
                 setTracking(false);
                 if (saved)
                   writeSaved(storageKey, { ...saved, tracking: false });
@@ -237,7 +243,7 @@ export function PublicJourney({
           )}
           <p className="muted">
             {tracking
-              ? "Medição ativa: ambientes, tempo com a página visível, cliques e simulações de financiamento. Conclusão significa que todos os ambientes foram abertos."
+              ? "Medição ativa apenas com o tour visível e a janela em foco. Após 1 minuto sem interação, o tempo pausa. A conclusão exige pelo menos 15 segundos em cada ambiente."
               : "Navegação sem medição comportamental. Seu cadastro continua disponível para atendimento."}
           </p>
         </div>

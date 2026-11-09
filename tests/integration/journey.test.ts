@@ -137,9 +137,8 @@ it("deduplicates events, rejects forged sessions and scene ids, and only complet
   const lead = await getLead(actor, leadId);
   expect(lead.stage).toBe("TOUR_COMPLETED");
   expect(lead.visits[0].events).toHaveLength(4);
-  expect(lead.interest.reasons.map((r) => r.label)).toContain(
-    "Viu todos os ambientes do tour",
-  );
+  // Historical COMPLETE markers without room dwell time do not inflate interest.
+  expect(lead.interest).toMatchObject({ score: 0, level: "COLD" });
   expect((await listLeads(actor))[0].interest).toEqual(lead.interest);
 });
 it("does not record behavioral events without measurement consent", async () => {
@@ -150,6 +149,53 @@ it("does not record behavioral events without measurement consent", async () => 
   expect(await recordEvent(visit.token, { sequence: 1, kind: "START" })).toBe(
     false,
   );
+});
+it("qualifies dwell time per room and recomputes completion from measured events", async () => {
+  const lead = await getLead(actor, leadId);
+  const visit = lead.visits.find((v) => v.tracking)!;
+  await withTenant(actor, "lead:update", async (tx) => {
+    await tx.journeyEvent.createMany({
+      data: [
+        {
+          organizationId: orgId,
+          visitId: visit.id,
+          sequence: 5,
+          kind: "HEARTBEAT",
+          sceneId: sceneA,
+          durationMs: 14999,
+        },
+        {
+          organizationId: orgId,
+          visitId: visit.id,
+          sequence: 6,
+          kind: "HEARTBEAT",
+          sceneId: sceneB,
+          durationMs: 15000,
+        },
+      ],
+    });
+    await tx.tourVisit.update({
+      where: { id: visit.id },
+      data: { lastSequence: 6 },
+    });
+  });
+  const partial = await getLead(actor, leadId);
+  expect(partial.interest.reasons.map((r) => r.label)).not.toContain(
+    "Explorou todos os ambientes por pelo menos 15s",
+  );
+  expect(await analytics(actor, propertyId)).toMatchObject({ completed: 0 });
+  await withTenant(actor, "lead:update", (tx) =>
+    tx.journeyEvent.updateMany({
+      where: { visitId: visit.id, sequence: 5 },
+      data: { durationMs: 15000 },
+    }),
+  );
+  const qualified = await getLead(actor, leadId);
+  expect(qualified.interest.reasons.map((r) => r.label)).toContain(
+    "Explorou todos os ambientes por pelo menos 15s",
+  );
+  expect(await analytics(actor, propertyId)).toMatchObject({ completed: 1 });
+  expect(await analytics(other, propertyId)).toMatchObject({ completed: 0 });
 });
 it("records idempotent visit requests and keeps commercial stage and analytics tenant scoped", async () => {
   const input = {

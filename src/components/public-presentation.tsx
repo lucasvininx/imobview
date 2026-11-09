@@ -1,4 +1,15 @@
-import { MapPin, BedDouble, Expand, Car, Bath } from "lucide-react";
+import {
+  MapPin,
+  BedDouble,
+  Expand,
+  Car,
+  Bath,
+  MessageCircle,
+  Scan,
+  Calculator,
+  ArrowLeft,
+} from "lucide-react";
+import Link from "next/link";
 import { SiteHeader } from "./site-header";
 import { SiteFooter } from "./site-footer";
 import { Badge, ButtonLink } from "./ui";
@@ -25,6 +36,7 @@ export function PublicPresentation({
   tours?: TourView[];
   exterior?: ExteriorConfig | null;
 }) {
+  const canSimulate = property.forSale && property.priceCents > BigInt(0);
   const contact = whatsappUrl(
     property.whatsapp,
     `Olá! Tenho interesse no imóvel ${property.title}.`,
@@ -38,28 +50,14 @@ export function PublicPresentation({
     <>
       <SiteHeader />
       <main id="conteudo" className="container public-property">
+        <Link href="/buscar" className="text-link property-back">
+          <ArrowLeft size={16} /> Voltar aos imóveis
+        </Link>
         {!demo && property.isDemo && (
           <p className="notice">
             Imóvel demonstrativo · Este cadastro é fictício. As imagens e os
             valores são ilustrativos e não representam uma oferta real.
           </p>
-        )}
-        {tours.map((tour) => (
-          <section key={tour.id} aria-label={tour.title}>
-            <h2>{tour.title}</h2>
-            {demo ? (
-              <TourViewer
-                scenes={tour.scenes}
-                floorPlans={tour.floorPlans}
-                initialSceneId={tour.initialSceneId}
-              />
-            ) : (
-              <PublicJourney slug={property.slug} tour={tour} />
-            )}
-          </section>
-        ))}
-        {exterior && (
-          <ExteriorViewer config={exterior} title={property.title} />
         )}
         {demo && (
           <p className="notice">
@@ -68,12 +66,15 @@ export function PublicPresentation({
             venda.
           </p>
         )}
-        {images.length > 0 && (
-          <PropertyGallery images={images} title={property.title} />
-        )}
         <div className="public-property-info">
           <div>
-            <Badge active>{demo ? "DEMONSTRAÇÃO" : "IMÓVEL PUBLICADO"}</Badge>
+            <Badge active>
+              {demo
+                ? "DEMONSTRAÇÃO"
+                : property.forSale
+                  ? "À VENDA"
+                  : "PARA ALUGAR"}
+            </Badge>
             <h1>{property.title}</h1>
             {property.internalCode && (
               <p>Referência: {property.internalCode}</p>
@@ -83,6 +84,25 @@ export function PublicPresentation({
               <MapPin size={15} />
               {property.neighborhood} · {property.city}, {property.state}
             </p>
+            <nav
+              className="property-shortcuts"
+              aria-label="Explore este imóvel"
+            >
+              <a href="#contato-imovel">
+                <MessageCircle size={17} />{" "}
+                {property.forSale ? "Falar com a imobiliária" : "Quero alugar"}
+              </a>
+              {tours.length > 0 && (
+                <a href="#tour-imovel">
+                  <Scan size={17} /> Explorar tour 360°
+                </a>
+              )}
+              {canSimulate && (
+                <a href="#financiamento">
+                  <Calculator size={17} /> Simular financiamento
+                </a>
+              )}
+            </nav>
             <div className="public-specs">
               <span>
                 <Expand size={18} />
@@ -112,6 +132,12 @@ export function PublicPresentation({
               {!property.forSale && !demo && <small> /mês</small>}
             </strong>
             <ShareButton />
+            <a className="button button-primary" href="#contato-imovel">
+              <MessageCircle size={17} />{" "}
+              {property.forSale
+                ? "Tenho interesse neste imóvel"
+                : "Tenho interesse em alugar"}
+            </a>
             {demo || property.isDemo ? (
               <ButtonLink href="/buscar">Explorar outros imóveis ↗</ButtonLink>
             ) : (
@@ -136,26 +162,77 @@ export function PublicPresentation({
                 )}
                 {!contact && !property.contactEmail && (
                   <p>
-                    Consulte a imobiliária que compartilhou este imóvel para
-                    mais informações.
+                    Envie seu contato abaixo. A equipe responsável retornará
+                    para conversar sobre este imóvel.
                   </p>
                 )}
               </div>
             )}
-            {!demo && !property.isDemo && (
-              <InterestForm
-                slug={property.slug}
-                agency={property.organizationName}
-              />
-            )}
             <p style={{ fontSize: 10 }}>Uma apresentação ImobView°</p>
           </aside>
         </div>
-        {property.forSale && (
-          <FinancingSimulator
-            priceCents={Number(property.priceCents)}
-            defaultRateBps={property.financingRateBps}
-          />
+        {images.length > 0 && (
+          <PropertyGallery images={images} title={property.title} />
+        )}
+        <section
+          id="contato-imovel"
+          className="property-contact"
+          aria-label="Contato sobre o imóvel"
+        >
+          <div>
+            <p className="eyebrow">SEU PRÓXIMO PASSO</p>
+            <h2>
+              {property.forSale
+                ? "Vamos conversar sobre este imóvel?"
+                : "Gostou? Saiba como alugar."}
+            </h2>
+            <p>Atendimento por {property.organizationName}.</p>
+            <p>
+              {property.forSale
+                ? "Tire suas dúvidas e combine uma visita com a equipe responsável."
+                : "Consulte a disponibilidade, as condições de locação e agende uma visita com a imobiliária ou corretor responsável."}
+            </p>
+          </div>
+          {demo || property.isDemo ? (
+            <p className="notice">
+              Este imóvel é demonstrativo e não está disponível para
+              contratação. Nos anúncios reais, você pode enviar seu contato
+              diretamente à imobiliária responsável.
+            </p>
+          ) : (
+            <InterestForm
+              slug={property.slug}
+              agency={property.organizationName}
+              purpose={property.forSale ? "SALE" : "RENT"}
+            />
+          )}
+        </section>
+        <div id="tour-imovel">
+          {tours.map((tour) => (
+            <section key={tour.id} aria-label={tour.title}>
+              <h2>{tour.title}</h2>
+              {demo ? (
+                <TourViewer
+                  scenes={tour.scenes}
+                  floorPlans={tour.floorPlans}
+                  initialSceneId={tour.initialSceneId}
+                />
+              ) : (
+                <PublicJourney slug={property.slug} tour={tour} />
+              )}
+            </section>
+          ))}
+        </div>
+        {exterior && (
+          <ExteriorViewer config={exterior} title={property.title} />
+        )}
+        {canSimulate && (
+          <section id="financiamento" aria-label="Simulação de financiamento">
+            <FinancingSimulator
+              priceCents={Number(property.priceCents)}
+              defaultRateBps={property.financingRateBps}
+            />
+          </section>
         )}
       </main>
       <SiteFooter />

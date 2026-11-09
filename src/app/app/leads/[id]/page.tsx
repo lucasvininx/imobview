@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/ui";
 import { getLead } from "@/features/leads/service";
 import { LeadForm, RequestStatus } from "@/features/leads/lead-form";
 import { durationLabel, summarizeVisit } from "@/features/leads/metrics";
+import { MIN_ROOM_ENGAGEMENT_MS } from "@/features/leads/engagement";
 import { periodLabels } from "@/features/leads/schema";
 import { InterestDetails } from "@/features/leads/interest";
 import {
@@ -99,8 +100,10 @@ export default async function Page({
       />
       <h2>Comportamento no tour</h2>
       <p className="muted">
-        Tempo ativo aproximado, com a página visível. Todos os ambientes abertos
-        = tour concluído. Fechamento abrupto pode não enviar o último evento.
+        Tempo ativo aproximado, com o tour visível e a janela em foco. A
+        conclusão exige pelo menos 15 segundos em cada ambiente. A medição pausa
+        após 1 minuto sem interação. Fechamento abrupto pode não enviar o último
+        evento.
       </p>
       {lead.visits.map((visit) => {
         const summary = summarizeVisit(visit.events);
@@ -119,7 +122,12 @@ export default async function Page({
             ) : (
               <>
                 <p>
-                  {visit.completedAt
+                  {scenes.length > 0 &&
+                  scenes.every(
+                    (scene) =>
+                      (summary.rooms[scene.id]?.durationMs ?? 0) >=
+                      MIN_ROOM_ENGAGEMENT_MS,
+                  )
                     ? "Tour concluído"
                     : visit.startedAt
                       ? "Tour iniciado"

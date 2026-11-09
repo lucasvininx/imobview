@@ -24,7 +24,10 @@ const listingSchema = z.object({
   isDemo: z.boolean(),
 });
 export type Listing = z.infer<typeof listingSchema> & { image: string | null };
-export async function searchMarketplace(input: SearchInput) {
+export async function searchMarketplace(
+  input: SearchInput,
+  imageLimit?: number,
+) {
   const filters = interpretSearch(searchSchema.parse(input));
   const [row] = await db.$queryRaw<
     { result: unknown }[]
@@ -32,9 +35,8 @@ export async function searchMarketplace(input: SearchInput) {
   const result = z
     .object({ total: z.number(), items: z.array(listingSchema) })
     .parse(row.result);
-  const keys = result.items.flatMap((item) =>
-    item.photoKey ? [item.photoKey] : [],
-  );
+  const items = result.items.slice(0, imageLimit);
+  const keys = items.flatMap((item) => (item.photoKey ? [item.photoKey] : []));
   const urls = keys.length
     ? await signPanoramas(keys)
     : new Map<string, string>();
@@ -42,7 +44,7 @@ export async function searchMarketplace(input: SearchInput) {
     total: result.total,
     engine: "local" as const,
     filters,
-    items: result.items.map((item) => ({
+    items: items.map((item) => ({
       ...item,
       image: (item.photoKey ? urls.get(item.photoKey) : null) ?? item.cover,
     })),

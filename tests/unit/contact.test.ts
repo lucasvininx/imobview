@@ -1,4 +1,5 @@
 import { it, expect } from "vitest";
+import { businessMessageSchema } from "@/features/contact/schema";
 import {
   organizationContactSchema,
   whatsappUrl,
@@ -22,4 +23,23 @@ it("normalizes Brazilian WhatsApp and rejects injected URLs", () => {
   expect(whatsappUrl("5511999999999", "Casa & jardim")).toContain(
     "Casa%20%26%20jardim",
   );
+});
+
+it("validates contact messages, explicit consent and the spam trap", () => {
+  const input = {
+    name: "Maria Silva",
+    email: "MARIA@example.com",
+    message: "Gostaria de conhecer a plataforma para minha imobiliária.",
+    consent: true,
+  };
+  expect(businessMessageSchema.parse(input).email).toBe("maria@example.com");
+  expect(
+    businessMessageSchema.safeParse({ ...input, consent: false }).success,
+  ).toBe(false);
+  expect(
+    businessMessageSchema.safeParse({ ...input, website: "spam" }).success,
+  ).toBe(false);
+  expect(
+    businessMessageSchema.safeParse({ ...input, message: "oi" }).success,
+  ).toBe(false);
 });

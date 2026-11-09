@@ -6,6 +6,7 @@ import { stageSchema } from "./schema";
 import { scoreLead, type LeadInterest } from "./score";
 import type { Prisma } from "@/generated/prisma/client";
 import { leadProfileSchema } from "./profile-schema";
+import { MIN_ROOM_ENGAGEMENT_MS } from "./engagement";
 const idSchema = z.uuid();
 export function saveLeadProfile(actor: Actor, input: unknown, id?: string) {
   if (id) idSchema.parse(id);
@@ -134,24 +135,37 @@ async function interestByLead(
       lastSeenAt: Date | null;
     }[]
   >`
+    WITH room_time AS (
+      SELECT e."visitId", e."sceneId", sum(e."durationMs") AS duration
+      FROM "JourneyEvent" e
+      JOIN "TourVisit" v ON v.id=e."visitId" AND v."organizationId"=e."organizationId"
+      WHERE v."organizationId"=${organizationId}::uuid AND v.tracking=true
+        AND v."leadId"=ANY(${leads.map((lead) => lead.id)}::uuid[]) AND e."sceneId" IS NOT NULL
+      GROUP BY e."visitId", e."sceneId"
+    )
     SELECT l.id::text AS id,
       coalesce(bool_or(v.tracking), false) AS tracking,
       count(DISTINCT v.id) AS visits,
       coalesce(bool_or(v."startedAt" IS NOT NULL), false) AS started,
-      coalesce(bool_or(v."completedAt" IS NOT NULL), false) AS completed,
-      coalesce(sum(e."durationMs"), 0) AS "activeMs",
-      count(e.id) FILTER (WHERE e.kind='SCENE')
-        - count(DISTINCT v.id::text || e."sceneId"::text) FILTER (WHERE e.kind='SCENE') AS revisits,
+      coalesce(bool_or(v.tracking AND jsonb_array_length(v.scenes)>0 AND NOT EXISTS (
+        SELECT 1 FROM jsonb_array_elements(v.scenes) s
+        WHERE NOT EXISTS (SELECT 1 FROM room_time rt WHERE rt."visitId"=v.id
+          AND rt."sceneId"::text=s->>'id' AND rt.duration>=${MIN_ROOM_ENGAGEMENT_MS})
+      )), false) AS completed,
+      coalesce(sum(e."durationMs") FILTER (WHERE rt.duration>=${MIN_ROOM_ENGAGEMENT_MS}), 0) AS "activeMs",
+      count(e.id) FILTER (WHERE e.kind='SCENE' AND rt.duration>=${MIN_ROOM_ENGAGEMENT_MS})
+        - count(DISTINCT v.id::text || e."sceneId"::text) FILTER (WHERE e.kind='SCENE' AND rt.duration>=${MIN_ROOM_ENGAGEMENT_MS}) AS revisits,
       count(e.id) FILTER (WHERE e.kind='CONTACT') AS contacts,
       count(e.id) FILTER (WHERE e.kind='SHARE') AS shares,
       count(e.id) FILTER (WHERE e.kind='SIMULATE') AS simulations,
-      count(e.id) FILTER (WHERE e.kind='DETAIL') AS details,
+      count(e.id) FILTER (WHERE e.kind='DETAIL' AND rt.duration>=${MIN_ROOM_ENGAGEMENT_MS}) AS details,
       (SELECT count(*) FROM "VisitRequest" r
         WHERE r."leadId"=l.id AND r."organizationId"=l."organizationId" AND r.status<>'CANCELLED') AS requests,
       max(v."lastSeenAt") AS "lastSeenAt"
     FROM "Lead" l
     LEFT JOIN "TourVisit" v ON v."leadId"=l.id AND v."organizationId"=l."organizationId"
     LEFT JOIN "JourneyEvent" e ON e."visitId"=v.id AND e."organizationId"=v."organizationId"
+    LEFT JOIN room_time rt ON rt."visitId"=v.id AND rt."sceneId"=e."sceneId"
     WHERE l."organizationId"=${organizationId}::uuid AND l.id = ANY(${leads.map((lead) => lead.id)}::uuid[])
     GROUP BY l.id`;
   const now = new Date();
@@ -410,9 +424,16 @@ export function analytics(actor: Actor, propertyId?: string) {
       tx.tourVisit.count({
         where: { ...where, tracking: true, startedAt: { not: null } },
       }),
-      tx.tourVisit.count({
-        where: { ...where, tracking: true, completedAt: { not: null } },
-      }),
+      tx.$queryRaw<{ count: bigint }[]>`
+        SELECT count(*) AS count FROM "TourVisit" v
+        WHERE v."organizationId"=${actor.organizationId}::uuid AND v.tracking=true AND v."createdAt">=${since}
+          AND (${propertyId ?? null}::uuid IS NULL OR v."propertyId"=${propertyId ?? null}::uuid)
+          AND jsonb_array_length(v.scenes)>0
+          AND NOT EXISTS (
+            SELECT 1 FROM jsonb_array_elements(v.scenes) s
+            WHERE (SELECT coalesce(sum(e."durationMs"),0) FROM "JourneyEvent" e
+              WHERE e."visitId"=v.id AND e."organizationId"=v."organizationId" AND e."sceneId"::text=s->>'id')<${MIN_ROOM_ENGAGEMENT_MS}
+          )`,
       tx.$queryRaw<
         {
           id: string;
@@ -467,7 +488,7 @@ export function analytics(actor: Actor, propertyId?: string) {
       proposals,
       sales,
       started,
-      completed,
+      completed: Number(completed[0]?.count ?? 0),
       simulations,
       daily,
       rooms: rooms.map((r) => ({

@@ -19,16 +19,16 @@ import { commercialOverview, hotLeads } from "@/features/leads/service";
 import { InterestBadge } from "@/features/leads/interest";
 export default async function Dashboard() {
   const { actor, user, membership } = await requireWorkspace();
-  const [allProperties, counts] = await Promise.all([
+  const readLeads = can(membership.role, "lead:read");
+  const [allProperties, counts, commercial, hot] = await Promise.all([
     listProperties(actor),
     getPropertyStats(actor),
+    readLeads ? commercialOverview(actor) : Promise.resolve(null),
+    readLeads ? hotLeads(actor, 3) : Promise.resolve(null),
   ]);
   const properties = allProperties.filter(
     (property) => property.status !== "ARCHIVED",
   );
-  const [commercial, hot] = can(membership.role, "lead:read")
-    ? await Promise.all([commercialOverview(actor), hotLeads(actor, 3)])
-    : [null, null];
   const stats = [
     {
       label: "Imóveis no portfólio",

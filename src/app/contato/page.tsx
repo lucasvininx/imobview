@@ -2,6 +2,8 @@ import { businessContact } from "@/config/business";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { ButtonLink } from "@/components/ui";
+import { BusinessContactForm } from "@/features/contact/form";
+import { Camera } from "lucide-react";
 export const metadata = { title: "Vamos conversar" };
 export default function Page() {
   const contact = businessContact();
@@ -42,11 +44,25 @@ export default function Page() {
           </p>
         )}
         {!contact.whatsapp && !contact.email && (
-          <p className="notice">
-            O atendimento comercial está indisponível neste momento. Você pode
-            explorar o portal ou acessar sua conta profissional.
+          <p>
+            Enquanto o atendimento por e-mail é preparado, converse com a nossa
+            equipe pelo Instagram.
           </p>
         )}
+        <p>
+          <a
+            className="button button-secondary"
+            href="https://www.instagram.com/imobview_/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Camera size={18} /> Falar com a ImobView no Instagram
+          </a>
+        </p>
+        {contact.email &&
+          process.env.SMTP_ENABLED !== "false" &&
+          process.env.SMTP_HOST &&
+          process.env.SMTP_FROM && <BusinessContactForm />}
       </main>
       <SiteFooter />
     </>

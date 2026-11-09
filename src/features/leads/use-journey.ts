@@ -2,6 +2,7 @@
 import { useEffect, useRef, useCallback } from "react";
 import type { z } from "zod";
 import type { eventSchema } from "./schema";
+import { TourEngagement, TOUR_HEARTBEAT_MS } from "./engagement";
 import {
   financingInputSchema,
   type FinancingInput,
@@ -18,13 +19,16 @@ export function useJourney(
   enabled: boolean,
   sceneCount: number,
 ) {
+  const tourRef = useRef<HTMLDivElement>(null);
+  const attachTour = useCallback((element: HTMLDivElement | null) => {
+    tourRef.current = element;
+  }, []);
+  const clock = useRef(new TourEngagement(sceneCount));
   const state = useRef({
     sequence: 0,
     scene: null as string | null,
-    since: 0,
     started: false,
     complete: false,
-    visited: new Set<string>(),
     queue: Promise.resolve(),
   });
   const emit = useCallback(
@@ -62,28 +66,62 @@ export function useJourney(
   );
   const flush = useCallback(() => {
     const s = state.current;
-    if (s.started && s.scene && s.since)
-      emit("HEARTBEAT", s.scene, performance.now() - s.since);
-    s.since = document.visibilityState === "visible" ? performance.now() : 0;
+    const duration = clock.current.consume(performance.now());
+    if (s.started && s.scene && duration) emit("HEARTBEAT", s.scene, duration);
+    if (s.started && !s.complete && clock.current.complete) {
+      emit("COMPLETE");
+      s.complete = true;
+    }
   }, [emit]);
   useEffect(() => {
+    if (!token || !enabled) return;
+    clock.current = new TourEngagement(sceneCount);
     state.current = {
       sequence: 0,
       scene: null,
-      since: 0,
       started: false,
       complete: false,
-      visited: new Set(),
       queue: Promise.resolve(),
     };
-    const interval = setInterval(flush, 10000);
-    const visibility = () => {
+    let inViewport = false;
+    let focused = document.hasFocus();
+    const updateActive = () => {
       flush();
+      clock.current.setActive(
+        inViewport && focused && document.visibilityState === "visible",
+        performance.now(),
+      );
+    };
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        inViewport = entry.isIntersecting && entry.intersectionRatio >= 0.2;
+        updateActive();
+      },
+      { threshold: [0, 0.2] },
+    );
+    if (tourRef.current) observer.observe(tourRef.current);
+    const activity = () => {
+      clock.current.activity(performance.now());
+    };
+    const focus = () => {
+      focused = true;
+      activity();
+      updateActive();
+    };
+    const blur = () => {
+      focused = false;
+      updateActive();
+    };
+    const interval = setInterval(flush, TOUR_HEARTBEAT_MS);
+    const visibility = () => {
+      updateActive();
     };
     const exit = () => {
+      if (!state.current.started) return;
       flush();
       emit("EXIT", state.current.scene);
       state.current.started = false;
+      clock.current.setActive(false, performance.now());
     };
     const interaction = (event: Event) => {
       if (!(event instanceof CustomEvent)) return;
@@ -109,17 +147,35 @@ export function useJourney(
         emit("CONTACT");
     };
     document.addEventListener("visibilitychange", visibility);
+    window.addEventListener("focus", focus);
+    window.addEventListener("blur", blur);
+    const element = tourRef.current;
+    const activityEvents = [
+      "pointerdown",
+      "pointermove",
+      "keydown",
+      "wheel",
+      "touchstart",
+    ] as const;
+    for (const kind of activityEvents)
+      element?.addEventListener(kind, activity, { passive: true });
     window.addEventListener("pagehide", exit);
     window.addEventListener("imobview-interaction", interaction);
     document.addEventListener("click", contact);
     return () => {
+      exit();
+      observer.disconnect();
       clearInterval(interval);
+      window.removeEventListener("focus", focus);
+      window.removeEventListener("blur", blur);
+      for (const kind of activityEvents)
+        element?.removeEventListener(kind, activity);
       document.removeEventListener("click", contact);
       document.removeEventListener("visibilitychange", visibility);
       window.removeEventListener("pagehide", exit);
       window.removeEventListener("imobview-interaction", interaction);
     };
-  }, [token, enabled, flush, emit]);
+  }, [token, enabled, sceneCount, flush, emit]);
   const sceneChanged = useCallback(
     (id: string) => {
       const s = state.current;
@@ -129,23 +185,22 @@ export function useJourney(
       }
       flush();
       s.scene = id;
-      s.since = document.visibilityState === "visible" ? performance.now() : 0;
+      clock.current.setScene(id, performance.now());
       emit("SCENE", id);
-      s.visited.add(id);
-      if (s.visited.size === sceneCount && !s.complete) {
-        emit("COMPLETE");
-        s.complete = true;
-      }
     },
-    [emit, flush, sceneCount],
+    [emit, flush],
   );
   return {
+    attachTour,
     sceneChanged,
     hotspot: () => emit("HOTSPOT", state.current.scene),
     detail: (sceneId: string) => emit("DETAIL", sceneId),
     stop: () => {
+      if (!state.current.started) return;
       flush();
       emit("EXIT", state.current.scene);
+      state.current.started = false;
+      clock.current.setActive(false, performance.now());
     },
   };
 }

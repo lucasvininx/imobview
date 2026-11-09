@@ -44,7 +44,7 @@ it("ranks a returning visitor who requested a visit as hot and explains each poi
   expect(interest.score).toBe(35 + 20 + 20 + 5 + 4 + 5);
   expect(interest.reasons.map((r) => r.label)).toEqual([
     "Pediu visita presencial",
-    "Viu todos os ambientes do tour",
+    "Explorou todos os ambientes por pelo menos 15s",
     "6 min explorando o tour",
     "Voltou ao imóvel (2 visitas)",
     "Revisitou ambientes 2 vez(es)",
@@ -112,7 +112,13 @@ it("caps the score and respects closed commercial stages", () => {
 
 it("treats a financing simulation as a strong buying signal", () => {
   const interest = scoreLead(
-    { ...base, started: true, completed: true, simulations: 2 },
+    {
+      ...base,
+      started: true,
+      completed: true,
+      activeMs: 30000,
+      simulations: 2,
+    },
     now,
   );
   expect(interest.reasons[0]).toEqual({
@@ -123,8 +129,64 @@ it("treats a financing simulation as a strong buying signal", () => {
 });
 
 it("counts opened room details with a small capped bonus", () => {
-  expect(scoreLead({ ...base, details: 5 }, now).reasons[0]).toEqual({
+  expect(
+    scoreLead({ ...base, details: 5, activeMs: 15000 }, now).reasons[0],
+  ).toEqual({
     label: "Abriu 5 detalhe(s) do imóvel",
     points: 6,
   });
+});
+
+it("does not score short tours, rapid room changes or details before 15 seconds", () => {
+  for (const activeMs of [0, 5000, 14999]) {
+    expect(
+      scoreLead(
+        {
+          ...base,
+          started: true,
+          completed: true,
+          activeMs,
+          revisits: 20,
+          details: 10,
+        },
+        now,
+      ),
+    ).toMatchObject({
+      score: 0,
+      level: "COLD",
+      reasons: [],
+    });
+  }
+  expect(
+    scoreLead({ ...base, started: true, activeMs: 15000 }, now).score,
+  ).toBe(10);
+});
+
+it("keeps an explicit contact signal even during a short visit", () => {
+  expect(
+    scoreLead(
+      { ...base, started: true, completed: true, activeMs: 5000, contacts: 1 },
+      now,
+    ),
+  ).toMatchObject({
+    score: 20,
+    level: "COLD",
+  });
+});
+
+it("does not score tour behavior without measurement consent", () => {
+  expect(
+    scoreLead(
+      {
+        ...base,
+        tracking: false,
+        started: true,
+        completed: true,
+        activeMs: 300000,
+        revisits: 10,
+        details: 10,
+      },
+      now,
+    ).score,
+  ).toBe(0);
 });

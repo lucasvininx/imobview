@@ -224,7 +224,7 @@ export default async function Page({
           </div>
           <p>
             {data.started
-              ? "dos tours iniciados tiveram todos os ambientes abertos."
+              ? "dos tours iniciados tiveram pelo menos 15s em cada ambiente."
               : "Aguardando os primeiros tours iniciados."}
           </p>
           <div className="tour-stat-row">
@@ -236,7 +236,7 @@ export default async function Page({
             <strong>{data.started}</strong>
           </div>
           <div className="tour-stat-row">
-            <span>Todos os ambientes abertos</span>
+            <span>Todos os ambientes explorados por 15s</span>
             <strong>{data.completed}</strong>
           </div>
         </section>
@@ -350,9 +350,13 @@ export default async function Page({
         Visitas e navegação incluem somente medição autorizada. Leads e
         solicitações podem existir sem medição. Propostas e fechamentos
         referem-se aos leads recebidos no período e são registrados pela equipe.
-        Conclusão do tour indica cobertura dos ambientes. Origens são declaradas
-        pelo visitante; não comprovam atribuição de venda. Até 100 origens e
-        3.000 ambientes são considerados.
+        A conclusão exige ao menos 15 segundos em cada ambiente. Na pontuação
+        dos leads, passagens mais curtas não somam tempo, revisitas ou detalhes.
+        Frio: 0–29 pontos; morno: 30–59; quente: 60–100. Contato, simulações e
+        pedidos de visita também influenciam a classificação. A medição pausa
+        com o tour fora da tela, a janela sem foco ou após 1 minuto sem
+        interação. Origens são declaradas pelo visitante; não comprovam
+        atribuição de venda. Até 100 origens e 3.000 ambientes são considerados.
       </p>
     </>
   );

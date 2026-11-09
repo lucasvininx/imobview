@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { Suspense } from "react";
 import Link from "next/link";
 import {
   ArrowUpRight,
@@ -15,8 +16,29 @@ import { ListingCard } from "@/features/marketplace/listing-card";
 import { searchMarketplace } from "@/features/marketplace/service";
 import { searchSchema } from "@/features/marketplace/search";
 export const dynamic = "force-dynamic";
-export default async function Home() {
-  const listings = await searchMarketplace(searchSchema.parse({}));
+async function FeaturedListings() {
+  const listings = await searchMarketplace(searchSchema.parse({}), 6);
+  return listings.items.length ? (
+    <div className="listing-grid">
+      {listings.items.map((listing) => (
+        <ListingCard key={listing.slug} listing={listing} />
+      ))}
+    </div>
+  ) : (
+    <div className="market-empty">
+      <MapPin size={28} />
+      <h3>Seu próximo endereço pode estar chegando.</h3>
+      <p>
+        Novos imóveis aparecerão aqui assim que forem publicados pelas
+        imobiliárias.
+      </p>
+      <Link className="button button-secondary" href="/buscar">
+        Explorar busca
+      </Link>
+    </div>
+  );
+}
+export default function Home() {
   return (
     <>
       <SiteHeader />
@@ -36,6 +58,9 @@ export default async function Home() {
               <br />
               Conte o que procura. A gente conecta você ao seu próximo lar.
             </p>
+            <div className="home-search">
+              <SearchForm />
+            </div>
             <div className="market-hero-note">
               <Scan size={20} />
               <span>
@@ -51,7 +76,7 @@ export default async function Home() {
               alt="Inspiração: casa contemporânea com jardim e piscina"
               fill
               priority
-              sizes="(max-width: 760px) 100vw, 55vw"
+              sizes="(max-width: 760px) 100vw, 40vw"
             />
             <span className="photo-caption">
               Inspiração para o seu próximo lar
@@ -68,8 +93,19 @@ export default async function Home() {
             </div>
           </div>
         </section>
-        <div className="container home-search">
-          <SearchForm />
+        <div
+          className="container market-benefits"
+          aria-label="Encontre seu imóvel com a ImobView"
+        >
+          <span>
+            <MapPin size={18} /> Busque na sua região
+          </span>
+          <span>
+            <Scan size={18} /> Explore tours 360° disponíveis
+          </span>
+          <span>
+            <Building2 size={18} /> Fale direto com a imobiliária
+          </span>
         </div>
         <section className="container market-section" id="imoveis">
           <div className="market-section-heading">
@@ -82,25 +118,9 @@ export default async function Home() {
               Explorar todos <ArrowRight size={17} />
             </Link>
           </div>
-          {listings.items.length ? (
-            <div className="listing-grid">
-              {listings.items.slice(0, 6).map((listing) => (
-                <ListingCard key={listing.slug} listing={listing} />
-              ))}
-            </div>
-          ) : (
-            <div className="market-empty">
-              <MapPin size={28} />
-              <h3>Seu próximo endereço pode estar chegando.</h3>
-              <p>
-                Novos imóveis aparecerão aqui assim que forem publicados pelas
-                imobiliárias.
-              </p>
-              <Link className="button button-secondary" href="/buscar">
-                Explorar busca
-              </Link>
-            </div>
-          )}
+          <Suspense fallback={<ListingSkeleton />}>
+            <FeaturedListings />
+          </Suspense>
         </section>
         <section className="market-how container" id="como-funciona">
           <div>
@@ -164,5 +184,30 @@ export default async function Home() {
       </main>
       <SiteFooter />
     </>
+  );
+}
+
+function ListingSkeleton() {
+  return (
+    <div
+      className="listing-grid"
+      aria-busy="true"
+      aria-label="Carregando imóveis"
+    >
+      {Array.from({ length: 6 }, (_, index) => (
+        <div
+          key={index}
+          className="listing-card listing-placeholder"
+          aria-hidden="true"
+        >
+          <div className="listing-image" />
+          <div className="listing-body">
+            <span />
+            <span />
+            <span />
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }

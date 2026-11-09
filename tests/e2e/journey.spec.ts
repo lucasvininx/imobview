@@ -9,6 +9,7 @@ test("visitor controls measurement, creates a lead, explores rooms and requests 
   page,
   request,
 }) => {
+  test.setTimeout(120000);
   const propertyId = randomUUID(),
     tourId = randomUUID(),
     slug = `journey-${randomUUID()}`;
@@ -106,6 +107,37 @@ test("visitor controls measurement, creates a lead, explores rooms and requests 
     await expect(
       page.getByRole("button", { name: "Quarto", exact: true }),
     ).toHaveAttribute("aria-pressed", "true");
+    expect(
+      Number(
+        (
+          await pool.query(
+            'SELECT count(*) FROM "TourVisit" WHERE "propertyId"=$1 AND "completedAt" IS NOT NULL',
+            [propertyId],
+          )
+        ).rows[0].count,
+      ),
+    ).toBe(0);
+    // Dwell in both rooms: opening them quickly must not count as completion.
+    for (const [index, name] of [
+      [1, "Quarto"],
+      [0, "Sala"],
+    ] as const) {
+      await page.getByRole("button", { name, exact: true }).click();
+      await expect
+        .poll(
+          async () =>
+            Number(
+              (
+                await pool.query(
+                  'SELECT coalesce(sum(e."durationMs"),0) duration FROM "JourneyEvent" e JOIN "TourVisit" v ON v.id=e."visitId" WHERE v."propertyId"=$1 AND e."sceneId"=$2',
+                  [propertyId, sceneIds[index]],
+                )
+              ).rows[0].duration,
+            ),
+          { timeout: 25000 },
+        )
+        .toBeGreaterThanOrEqual(15000);
+    }
     await expect
       .poll(async () =>
         Number(
@@ -278,7 +310,7 @@ test("visitor controls measurement, creates a lead, explores rooms and requests 
     await expect(page.locator(".completion-ring")).toContainText("100%");
     await expect(
       page.getByText(
-        "dos tours iniciados tiveram todos os ambientes abertos.",
+        "dos tours iniciados tiveram pelo menos 15s em cada ambiente.",
         { exact: true },
       ),
     ).toBeVisible();

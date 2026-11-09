@@ -5,9 +5,11 @@ import { registerInterestAction } from "./interest-action";
 export function InterestForm({
   slug,
   agency,
+  purpose = "SALE",
 }: {
   slug: string;
   agency: string;
+  purpose?: "SALE" | "RENT";
 }) {
   const [busy, setBusy] = useState(false),
     [sent, setSent] = useState(false),
@@ -45,7 +47,11 @@ export function InterestForm({
         }
       }}
     >
-      <h3>É o lugar que você procura?</h3>
+      <h3>
+        {purpose === "RENT"
+          ? "Fale sobre a locação"
+          : "É o lugar que você procura?"}
+      </h3>
       <p>Deixe seu contato para a {agency}.</p>
       <label className="field">
         Seu nome completo
@@ -92,7 +98,11 @@ export function InterestForm({
         </span>
       </label>
       <button className="button button-primary" disabled={busy}>
-        {busy ? "Enviando…" : "Tenho interesse"}
+        {busy
+          ? "Enviando…"
+          : purpose === "RENT"
+            ? "Quero falar sobre o aluguel"
+            : "Tenho interesse"}
       </button>
       {error && (
         <p role="alert" className="form-error">

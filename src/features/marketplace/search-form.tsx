@@ -1,9 +1,10 @@
 import { Search, SlidersHorizontal, Sparkles } from "lucide-react";
 import type { SearchInput } from "./search";
 import Link from "next/link";
+import Form from "next/form";
 export function SearchForm({ values }: { values?: SearchInput }) {
   return (
-    <form action="/buscar" className="market-search">
+    <Form action="/buscar" className="market-search">
       <div
         className="search-purpose"
         role="navigation"
@@ -152,6 +153,6 @@ export function SearchForm({ values }: { values?: SearchInput }) {
         definir seu orçamento. Quartos, banheiros e vagas indicam quantidades
         mínimas.
       </p>
-    </form>
+    </Form>
   );
 }

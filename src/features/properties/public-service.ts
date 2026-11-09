@@ -34,24 +34,30 @@ export async function getPublicProperty(slug: string) {
     unknown[]
   >`SELECT * FROM public.get_published_property(${slug})`;
   if (!rows[0]) return null;
-  const [flags] = await db.$queryRaw<
-    { isDemo: boolean }[]
-  >`SELECT * FROM public.get_public_property_flags(${slug})`;
-  const [extra] = await db.$queryRaw<
-    unknown[]
-  >`SELECT * FROM public.get_property_presentation(${slug})`;
+  const [flagRows, extraRows, settingsRows, financingRows] = await Promise.all([
+    db.$queryRaw<
+      { isDemo: boolean }[]
+    >`SELECT * FROM public.get_public_property_flags(${slug})`,
+    db.$queryRaw<
+      unknown[]
+    >`SELECT * FROM public.get_property_presentation(${slug})`,
+    db.$queryRaw<
+      {
+        captureLeads: boolean;
+        internalCode: string;
+        condominium: string;
+        suites: number;
+      }[]
+    >`SELECT * FROM public.get_journey_settings(${slug})`,
+    db.$queryRaw<
+      { purpose: string; priceCents: bigint; financingRateBps: number }[]
+    >`SELECT * FROM public.get_financing_settings(${slug})`,
+  ]);
+  const [flags] = flagRows;
+  const [extra] = extraRows;
+  const [settings] = settingsRows;
+  const [financing] = financingRows;
   if (!extra) return null;
-  const [settings] = await db.$queryRaw<
-    {
-      captureLeads: boolean;
-      internalCode: string;
-      condominium: string;
-      suites: number;
-    }[]
-  >`SELECT * FROM public.get_journey_settings(${slug})`;
-  const [financing] = await db.$queryRaw<
-    { purpose: string; priceCents: bigint; financingRateBps: number }[]
-  >`SELECT * FROM public.get_financing_settings(${slug})`;
   const presentation = z
     .object({
       contactEmail: z.string(),
@@ -69,9 +75,7 @@ export async function getPublicProperty(slug: string) {
     internalCode: settings?.internalCode ?? "",
     condominium: settings?.condominium ?? "",
     suites: settings?.suites ?? 0,
-    forSale:
-      financing?.purpose === "SALE" &&
-      (financing?.priceCents ?? BigInt(0)) > BigInt(0),
+    forSale: financing?.purpose === "SALE",
     financingRateBps: financing?.financingRateBps ?? 1150,
     contactEmail: presentation.contactEmail,
     whatsapp: presentation.whatsapp,

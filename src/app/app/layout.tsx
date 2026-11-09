@@ -7,6 +7,8 @@ import { NotificationBell } from "@/features/notifications/bell";
 import { listNotifications } from "@/features/notifications/service";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-provider";
+import { Suspense } from "react";
+import type { Actor } from "@/server/tenant";
 export const metadata = {
   title: "Sua plataforma",
   robots: { index: false, follow: false },
@@ -18,9 +20,6 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   const { actor, user, membership } = await requireWorkspace();
-  const notifications = can(membership.role, "lead:read")
-    ? await listNotifications(actor)
-    : null;
   return (
     <div className="app-layout">
       <aside className="sidebar">
@@ -47,12 +46,17 @@ export default async function AppLayout({
           </div>
           <div>
             <ThemeToggle />
-            {notifications && (
-              <NotificationBell
-                key={actor.organizationId}
-                workspaceId={actor.organizationId}
-                initial={notifications}
-              />
+            {can(membership.role, "lead:read") && (
+              <Suspense
+                fallback={
+                  <span
+                    className="notification-placeholder"
+                    aria-hidden="true"
+                  />
+                }
+              >
+                <WorkspaceNotifications actor={actor} />
+              </Suspense>
             )}
             <span>{user.name}</span>
             <span className="avatar" aria-hidden="true">
@@ -65,5 +69,16 @@ export default async function AppLayout({
         </main>
       </div>
     </div>
+  );
+}
+
+async function WorkspaceNotifications({ actor }: { actor: Actor }) {
+  const notifications = await listNotifications(actor);
+  return (
+    <NotificationBell
+      key={actor.organizationId}
+      workspaceId={actor.organizationId}
+      initial={notifications}
+    />
   );
 }

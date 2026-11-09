@@ -1,4 +1,5 @@
 // Explainable interest score: every point comes from a recorded behavior so brokers can trust the ranking.
+import { MIN_ROOM_ENGAGEMENT_MS } from "./engagement";
 export type LeadSignals = {
   stage: string;
   // Any visit with measurement consent; without it only visits and requests are known.
@@ -70,10 +71,14 @@ export function scoreLead(
       15,
     );
   if (signals.contacts) add("Clicou para falar com a imobiliária", 15);
-  if (signals.completed) add("Viu todos os ambientes do tour", 20);
-  else if (signals.started) add("Começou o tour", 5);
+  const engaged =
+    signals.tracking && signals.activeMs >= MIN_ROOM_ENGAGEMENT_MS;
+  if (engaged && signals.completed)
+    add("Explorou todos os ambientes por pelo menos 15s", 20);
+  else if (engaged && signals.started)
+    add("Explorou o tour por pelo menos 15s", 5);
   const minutes = signals.activeMs / 60000;
-  if (minutes >= 1)
+  if (engaged && minutes >= 1)
     add(
       `${Math.round(minutes)} min explorando o tour`,
       Math.min(20, Math.floor(minutes * 4)),
@@ -83,12 +88,12 @@ export function scoreLead(
       `Voltou ao imóvel (${signals.visits} visitas)`,
       Math.min(15, (signals.visits - 1) * 5),
     );
-  if (signals.revisits)
+  if (engaged && signals.revisits)
     add(
       `Revisitou ambientes ${signals.revisits} vez(es)`,
       Math.min(6, signals.revisits * 2),
     );
-  if (signals.details)
+  if (engaged && signals.details)
     add(
       `Abriu ${signals.details} detalhe(s) do imóvel`,
       Math.min(6, signals.details * 2),
