@@ -66,6 +66,9 @@ export function PublicPresentation({
             venda.
           </p>
         )}
+        {images.length > 0 && (
+          <PropertyGallery images={images} title={property.title} />
+        )}
         <div className="public-property-info">
           <div>
             <Badge active>
@@ -88,6 +91,9 @@ export function PublicPresentation({
               className="property-shortcuts"
               aria-label="Explore este imóvel"
             >
+              {images.length > 0 && (
+                <a href="#fotos-imovel">Ver todas as fotos</a>
+              )}
               <a href="#contato-imovel">
                 <MessageCircle size={17} />{" "}
                 {property.forSale ? "Falar com a imobiliária" : "Quero alugar"}
@@ -171,9 +177,30 @@ export function PublicPresentation({
             <p style={{ fontSize: 10 }}>Uma apresentação ImobView°</p>
           </aside>
         </div>
-        {images.length > 0 && (
-          <PropertyGallery images={images} title={property.title} />
-        )}
+        <div id="tour-imovel">
+          {tours.map((tour) => (
+            <section key={tour.id} aria-label={tour.title}>
+              <p className="eyebrow">VISITE SEM SAIR DE CASA</p>
+              <h2>{tour.title}</h2>
+              {!!tour.scenes.length && (
+                <p>
+                  {tour.scenes.length} ambientes conectados · Explore pelas
+                  setas, pelos nomes dos cômodos
+                  {tour.floorPlans.length ? " ou pela planta interativa" : ""}.
+                </p>
+              )}
+              {demo || property.isDemo ? (
+                <TourViewer
+                  scenes={tour.scenes}
+                  floorPlans={tour.floorPlans}
+                  initialSceneId={tour.initialSceneId}
+                />
+              ) : (
+                <PublicJourney slug={property.slug} tour={tour} />
+              )}
+            </section>
+          ))}
+        </div>
         <section
           id="contato-imovel"
           className="property-contact"
@@ -207,22 +234,6 @@ export function PublicPresentation({
             />
           )}
         </section>
-        <div id="tour-imovel">
-          {tours.map((tour) => (
-            <section key={tour.id} aria-label={tour.title}>
-              <h2>{tour.title}</h2>
-              {demo ? (
-                <TourViewer
-                  scenes={tour.scenes}
-                  floorPlans={tour.floorPlans}
-                  initialSceneId={tour.initialSceneId}
-                />
-              ) : (
-                <PublicJourney slug={property.slug} tour={tour} />
-              )}
-            </section>
-          ))}
-        </div>
         {exterior && (
           <ExteriorViewer config={exterior} title={property.title} />
         )}

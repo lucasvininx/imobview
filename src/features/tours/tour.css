@@ -477,3 +477,25 @@
 .tour-scene-nav-scroll button {
   flex: 0 0 auto;
 }
+.tour-start {
+  isolation: isolate;
+}
+.tour-cover-preview {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -2;
+}
+.tour-start:has(.tour-cover-preview)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: #071810a8;
+}
+.tour-start h2,
+.tour-start p {
+  color: #fff;
+}

@@ -83,6 +83,7 @@ export function TourViewer({
     }
   }, [initialSceneId]);
   function navigate(id: string) {
+    setError("");
     desiredScene.current = id;
     if (!started) {
       setStarted(true);
@@ -261,6 +262,15 @@ export function TourViewer({
       )}
       {!started && (
         <div className="tour-start">
+          {scenes[0] && (
+            // A background preview is decorative; the room name is below.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              className="tour-cover-preview"
+              src={scenes[0].panoramaUrl}
+              alt=""
+            />
+          )}
           <h2>Conheça cada ambiente.</h2>
           <p>Explore em 360° e navegue pelos pontos de conexão.</p>
           <Button onClick={() => setStarted(true)} disabled={!scenes.length}>
