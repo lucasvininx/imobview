@@ -20,7 +20,7 @@ export default async function Demo() {
       <PublicPresentation
         demo
         property={property}
-        tours={await publicTours(slug)}
+        tours={await publicTours(slug, true)}
         exterior={await publicExterior(slug)}
       />
     );

@@ -61,6 +61,10 @@ export const startVisitSchema = z
     (v) => !(v.contact && v.returnKey),
     "Informe os dados ou continue como visitante reconhecido.",
   );
+export const measuredVisitSchema = startVisitSchema.refine(
+  (visit) => visit.tracking,
+  "Autorize a medição da visita para iniciar o tour.",
+);
 export const eventSchema = z
   .object({
     sequence: z.number().int().min(1).max(2500),

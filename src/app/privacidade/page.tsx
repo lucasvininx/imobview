@@ -30,27 +30,28 @@ export default function Page() {
           enviados ao provedor por essa funcionalidade.
         </p>
         <p>
-          Os imóveis demonstrativos são fictícios e a demonstração pode ser
-          explorada sem cadastro. Nos links públicos de imóveis, o cadastro com
-          nome, e-mail e telefone é necessário antes de liberar o tour. Esses
-          dados ficam disponíveis para a imobiliária responsável, mesmo sem
-          concluir o tour ou solicitar uma visita presencial. O formulário de
-          interesse do portal envia nome, e-mail e celular à imobiliária
-          responsável mediante sua autorização, sem exigir um tour. Na área
-          profissional, a equipe pode complementar o cadastro com CPF e data de
-          nascimento fornecidos pelo cliente. Esses dados ficam restritos à
-          imobiliária e não aparecem nas páginas públicas.
+          Os imóveis demonstrativos são fictícios. Em todos os tours públicos,
+          inclusive nas demonstrações, o cadastro com nome, e-mail e telefone é
+          necessário antes de liberar o tour. Esses dados ficam disponíveis para
+          a imobiliária responsável, mesmo sem concluir o tour ou solicitar uma
+          visita presencial. O formulário de interesse do portal envia nome,
+          e-mail e celular à imobiliária responsável mediante sua autorização,
+          sem exigir um tour. Na área profissional, a equipe pode complementar o
+          cadastro com CPF e data de nascimento fornecidos pelo cliente. Esses
+          dados ficam restritos à imobiliária e não aparecem nas páginas
+          públicas.
         </p>
         <p>
-          A medição de comportamento é opcional e começa apenas após sua
-          escolha. Registramos ambientes abertos, ordem de navegação, tempo com
-          a página visível, cliques em contato e compartilhamento e os valores
-          que você informar no simulador de financiamento (entrada, prazo, taxa
-          e sistema). Você pode parar a medição no próprio tour. A origem é
-          limitada ao domínio de referência ou ao parâmetro utm_source; não
-          armazenamos a URL completa de referência. Não utilizamos cookies
-          publicitários. Uma chave temporária derivada do endereço de rede
-          limita abuso dos formulários, sem guardar o IP em claro nesse módulo.
+          A visita virtual exige autorização para a medição de comportamento,
+          que começa apenas após sua escolha. Registramos ambientes abertos,
+          ordem de navegação, tempo com a página visível, cliques em contato e
+          compartilhamento e os valores que você informar no simulador de
+          financiamento (entrada, prazo, taxa e sistema). Você pode parar a
+          medição no próprio tour. A origem é limitada ao domínio de referência
+          ou ao parâmetro utm_source; não armazenamos a URL completa de
+          referência. Não utilizamos cookies publicitários. Uma chave temporária
+          derivada do endereço de rede limita abuso dos formulários, sem guardar
+          o IP em claro nesse módulo.
         </p>
         <p>
           Se você deixar seu contato, guardamos neste navegador uma chave

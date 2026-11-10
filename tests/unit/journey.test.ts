@@ -4,8 +4,26 @@ import {
   contactSchema,
   eventSchema,
   startVisitSchema,
+  measuredVisitSchema,
   sourceFromLocation,
 } from "@/features/leads/schema";
+it("requires measurement permission for the public tour entry form", () => {
+  const visit = {
+    slug: "apartamento",
+    tourId: randomUUID(),
+    contact: {
+      name: "Pessoa Teste",
+      email: "pessoa@example.com",
+      phone: "11999999999",
+      consent: true,
+    },
+    tracking: true,
+  };
+  expect(measuredVisitSchema.safeParse(visit).success).toBe(true);
+  expect(
+    measuredVisitSchema.safeParse({ ...visit, tracking: false }).success,
+  ).toBe(false);
+});
 import { summarizeVisit } from "@/features/leads/metrics";
 it("requires explicit contact consent and strips unknown personal fields", () => {
   const data = {

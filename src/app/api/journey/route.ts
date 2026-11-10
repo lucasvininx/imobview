@@ -1,9 +1,14 @@
 import { recordEvent } from "@/features/leads/public-service";
 import { readEnv } from "@/config/env";
+import { journeyOriginAllowed } from "@/features/leads/origin";
 export async function POST(request: Request) {
   if (
-    request.headers.get("origin") !==
-    new URL(readEnv().NEXT_PUBLIC_APP_URL).origin
+    !journeyOriginAllowed(
+      request.headers.get("origin"),
+      request.url,
+      readEnv().NEXT_PUBLIC_APP_URL,
+      process.env.NODE_ENV === "development",
+    )
   )
     return new Response(null, { status: 403 });
   // Stream with a hard cap; do not trust Content-Length on public endpoints.

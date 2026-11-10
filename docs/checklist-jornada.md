@@ -23,7 +23,7 @@ Comparação do repositório com a especificação fornecida pelo cliente, antes
 
 Completar a camada comercial da Fase 1 sem substituir o visualizador existente. O agendamento inicial é uma **solicitação de visita**, com confirmação humana, não uma promessa de disponibilidade de agenda. Corretores são contatos da imobiliária, separados das contas de acesso. Integrações externas dependem de configuração e autorização próprias.
 
-Dados de comportamento só serão enviados após escolha explícita do visitante. Visitar sem identificação continua possível. O funil deve informar sua cobertura: não representa visitantes que recusam medição. Não coletar CPF, IP em claro ou URLs completas de referência.
+Dados de comportamento só serão enviados após escolha explícita do visitante. O acesso ao tour público exige identificação e autorização de medição, inclusive em demonstrações; visitantes reconhecidos confirmam cada nova visita. O funil deve informar sua cobertura e considerar interrupções de medição. Não coletar CPF, IP em claro ou URLs completas de referência.
 
 ## Implementação deste ciclo
 

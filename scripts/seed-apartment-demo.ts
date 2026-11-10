@@ -5,6 +5,7 @@ import { Pool } from "pg";
 import sharp from "sharp";
 import { createClient } from "@supabase/supabase-js";
 import { databasePoolConfig } from "../src/config/database-pool.mjs";
+import { apartmentDoorways } from "./apartment-demo-layout";
 import {
   publicationIssues,
   tourDocumentSchema,
@@ -82,16 +83,6 @@ const rooms = [
   ],
 ] as const;
 // Bidirectional graph: no room is a dead end.
-const edges = [
-  [0, 1],
-  [0, 3],
-  [0, 4],
-  [0, 5],
-  [0, 6],
-  [1, 2],
-  [2, 3],
-  [4, 7],
-];
 const pool = new Pool(
   databasePoolConfig(
     process.env.DIRECT_DATABASE_URL!,
@@ -268,16 +259,16 @@ try {
             text: room[3],
           },
         ],
-        hotspots: edges
-          .filter((e) => e.includes(i))
-          .map((edge, n) => {
-            const target = edge.find((id) => id !== i)!;
+        hotspots: apartmentDoorways
+          .filter((doorway) => doorway.from === i)
+          .map((doorway) => {
+            const target = doorway.to;
             return {
               id: randomUUID(),
               targetSceneId: sceneIds[target],
-              label: rooms[target][1],
-              yaw: -1.8 + n * 1.1,
-              pitch: -0.24,
+              label: `${doorway.via ? `${doorway.via} · ` : ""}${rooms[target][1]}`,
+              yaw: doorway.yaw,
+              pitch: doorway.pitch,
             };
           }),
       })),
@@ -359,7 +350,7 @@ try {
         tourId,
         rooms: rooms.length,
         photos: photos.length,
-        connections: edges.length * 2,
+        connections: apartmentDoorways.length,
         floorPlan: true,
       }),
     );

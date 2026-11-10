@@ -23,7 +23,6 @@ import type { TourView } from "@/features/tours/viewer-types";
 import { FinancingSimulator } from "@/features/financing/simulator";
 import { ExteriorViewer } from "@/features/exterior/viewer";
 import type { ExteriorConfig } from "@/features/exterior/schema";
-import { TourViewer } from "@/features/tours/viewer";
 import { InterestForm } from "@/features/marketplace/interest-form";
 export function PublicPresentation({
   property,
@@ -189,15 +188,7 @@ export function PublicPresentation({
                   {tour.floorPlans.length ? " ou pela planta interativa" : ""}.
                 </p>
               )}
-              {demo || property.isDemo ? (
-                <TourViewer
-                  scenes={tour.scenes}
-                  floorPlans={tour.floorPlans}
-                  initialSceneId={tour.initialSceneId}
-                />
-              ) : (
-                <PublicJourney slug={property.slug} tour={tour} />
-              )}
+              <PublicJourney slug={property.slug} tour={tour} />
             </section>
           ))}
         </div>

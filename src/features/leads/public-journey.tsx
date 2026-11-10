@@ -120,11 +120,12 @@ export function PublicJourney({
             <input
               type="checkbox"
               name="tracking"
+              required
               defaultChecked={saved.tracking}
             />
             Permito registrar ambientes visitados, tempo ativo, cliques e
             simulações de financiamento para ajudar a imobiliária a entender meu
-            interesse. Opcional.
+            interesse. Necessário para iniciar esta visita virtual.
           </label>
           <div className="form-actions">
             <Button disabled={busy}>
@@ -201,10 +202,10 @@ export function PublicJourney({
             .
           </label>
           <label className="check-field">
-            <input type="checkbox" name="tracking" />
+            <input type="checkbox" name="tracking" required />
             Permito registrar ambientes visitados, tempo ativo, cliques e
             simulações de financiamento para ajudar a imobiliária a entender meu
-            interesse. Opcional.
+            interesse. Necessário para iniciar esta visita virtual.
           </label>
           <div className="form-actions">
             <Button disabled={busy}>

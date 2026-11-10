@@ -42,7 +42,7 @@ const publicTourSchema = z.object({
   document: tourDocumentSchema,
   assets: z.array(z.object({ id: z.uuid(), storageKey: z.string() })),
 });
-export async function publicTours(slug: string, preview = false) {
+export async function publicTours(slug: string, preview = true) {
   if (!/^[a-z0-9-]{1,220}$/.test(slug)) return [];
   const rows = await db.$queryRaw<
     unknown[]

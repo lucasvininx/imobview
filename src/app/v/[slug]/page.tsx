@@ -39,7 +39,7 @@ export default async function Page({
   const { slug } = await params;
   const [property, tours, exterior] = await Promise.all([
     getProperty(slug),
-    getProperty(slug).then((item) => publicTours(slug, !item?.isDemo)),
+    publicTours(slug, true),
     publicExterior(slug),
   ]);
   if (!property) notFound();

@@ -499,3 +499,53 @@
 .tour-start p {
   color: #fff;
 }
+
+.tour-destination.psv-virtual-tour-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  filter: drop-shadow(0 2px 4px #0008);
+}
+.tour-destination-arrow {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #07583ee8;
+  font-size: 28px;
+  line-height: 1;
+}
+.tour-destination-label {
+  max-width: 160px;
+  padding: 5px 9px;
+  border-radius: 6px;
+  color: #fff;
+  background: #102c23ed;
+  border: 1px solid #ffffff90;
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 600;
+  text-align: center;
+  white-space: normal;
+}
+.tour-destination:hover .tour-destination-arrow {
+  background: #087b52;
+  transform: translateY(-2px);
+}
+.tour-destination:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+.tour-destination > span {
+  pointer-events: none;
+}

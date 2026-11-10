@@ -122,6 +122,9 @@ export function TourViewer({
           touchmoveTwoFingers: true,
           defaultYaw: start.initialYaw,
           defaultPitch: start.initialPitch,
+          defaultZoomLvl: 15,
+          maxFov: 100,
+          minFov: 45,
           lang: {
             zoom: "Zoom",
             zoomOut: "Diminuir zoom",
@@ -145,6 +148,38 @@ export function TourViewer({
               renderMode: "2d",
               preload: false,
               showLinkTooltip: true,
+              arrowStyle: {
+                size: { width: 160, height: 68 },
+                element: (link) => {
+                  const destination =
+                    scenes.find((scene) => scene.id === link.nodeId)?.title ??
+                    "Próximo ambiente";
+                  const button = document.createElement("button");
+                  button.type = "button";
+                  button.className = "tour-destination";
+                  button.setAttribute("aria-label", `Ir para ${destination}`);
+                  button.title = `Ir para ${destination}`;
+                  const arrow = document.createElement("span");
+                  arrow.className = "tour-destination-arrow";
+                  arrow.textContent = "↑";
+                  arrow.setAttribute("aria-hidden", "true");
+                  const label = document.createElement("span");
+                  label.className = "tour-destination-label";
+                  label.textContent = link.data?.label ?? destination;
+                  button.append(arrow, label);
+                  button.addEventListener("click", (event) => {
+                    event.stopPropagation();
+                    setLoading(true);
+                    void tourRef.current
+                      ?.setCurrentNode(link.nodeId, undefined, link)
+                      .catch(() =>
+                        setError("Não foi possível abrir este ambiente."),
+                      )
+                      .finally(() => setLoading(false));
+                  });
+                  return button;
+                },
+              },
               getLinkTooltip: (_content, link) =>
                 `<strong>${escapeHtml(
                   scenes.find((scene) => scene.id === link.nodeId)?.title ?? "",
@@ -153,9 +188,11 @@ export function TourViewer({
               transitionOptions: { effect: "none", rotation: false },
               nodes: scenes.map((scene) => ({
                 id: scene.id,
+                name: scene.title,
                 panorama: scene.panoramaUrl,
                 links: scene.hotspots.map((link) => ({
                   nodeId: link.targetSceneId,
+                  data: { label: link.label },
                   position: { yaw: link.yaw, pitch: link.pitch },
                 })),
                 markers: scene.infoPoints.map((point) => ({
@@ -187,10 +224,10 @@ export function TourViewer({
           );
         tour.addEventListener("node-changed", ({ node, data }) => {
           if (data?.fromLink) callbacks.current.onHotspot?.();
-          // Walking through an arrow keeps the visitor's heading; jumping from the
-          // room buttons or the floor plan opens the view chosen by the agency.
+          // Capture points have independent headings. Open the destination's
+          // authored view instead of carrying an unrelated camera orientation.
           const scene = scenes.find((item) => item.id === node.id);
-          if (!data?.fromLink && scene)
+          if (scene)
             instance?.rotate({
               yaw: scene.initialYaw,
               pitch: scene.initialPitch,

@@ -4,7 +4,8 @@ import { expect, it, vi } from "vitest";
 import type { PublicProperty } from "@/features/properties/public-service";
 
 vi.mock("@/features/leads/public-journey", () => ({
-  PublicJourney: () => null,
+  PublicJourney: () =>
+    createElement("div", { "data-tour-registration": "required" }),
 }));
 vi.mock("@/features/tours/viewer", () => ({ TourViewer: () => null }));
 vi.mock("@/features/exterior/viewer", () => ({ ExteriorViewer: () => null }));
@@ -82,3 +83,29 @@ it("labels the financing region with one unique heading target", () => {
   expect(html).toContain('aria-labelledby="financiamento"');
   expect(html).toContain("Simule o financiamento");
 });
+
+it.each([
+  { demo: true, isDemo: true },
+  { demo: false, isDemo: true },
+  { demo: false, isDemo: false },
+])(
+  "always gates published tours behind visitor registration (%j)",
+  ({ demo, isDemo }) => {
+    const html = renderToStaticMarkup(
+      createElement(PublicPresentation, {
+        demo,
+        property: { ...rental, isDemo },
+        tours: [
+          {
+            id: "test-tour",
+            title: "Tour",
+            initialSceneId: null,
+            scenes: [],
+            floorPlans: [],
+          },
+        ],
+      }),
+    );
+    expect(html).toContain('data-tour-registration="required"');
+  },
+);

@@ -103,7 +103,9 @@ test("visitor controls measurement, creates a lead, explores rooms and requests 
     await page.getByRole("button", { name: "Identificar e continuar" }).click();
     await page.getByRole("button", { name: "Iniciar tour 360°" }).click();
     await expect(page.locator(".tour-viewer [role=status]")).toHaveCount(0);
-    await page.getByRole("button", { name: "Ir para Quarto" }).click();
+    await page
+      .getByRole("button", { name: "Ir para Quarto", exact: true })
+      .click();
     await expect(
       page.getByRole("button", { name: "Quarto", exact: true }),
     ).toHaveAttribute("aria-pressed", "true");

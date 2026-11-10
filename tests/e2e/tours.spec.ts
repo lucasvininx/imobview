@@ -173,12 +173,15 @@ test("360 tour uploads, connects rooms, publishes and isolates drafts", async ({
   await page.getByLabel("E-mail", { exact: true }).fill("tour-e2e@example.com");
   await page.getByLabel("Telefone / WhatsApp").fill("11999999999");
   await page.getByLabel(/Quero receber contato/).check();
+  await page.getByLabel(/Permito registrar ambientes/).check();
   await page.getByRole("button", { name: "Identificar e continuar" }).click();
   const viewer = page
     .getByRole("region", { name: "Tour virtual 360 graus" })
     .last();
   await viewer.getByRole("button", { name: "Iniciar tour 360°" }).click();
-  await viewer.getByRole("button", { name: "Ir para Quarto" }).click();
+  await viewer
+    .getByRole("button", { name: "Ir para Quarto", exact: true })
+    .click();
   await expect(
     viewer.getByRole("button", { name: "Quarto", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");

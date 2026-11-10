@@ -10,7 +10,16 @@ import { deliverWhatsApp } from "@/features/notifications/whatsapp";
 import { after } from "next/server";
 import { logError } from "@/server/logger";
 import { deliverIntegrations } from "@/features/integrations/delivery";
+import { measuredVisitSchema } from "./schema";
 export async function beginVisitAction(input: unknown) {
+  const parsed = measuredVisitSchema.safeParse(input);
+  if (!parsed.success)
+    return {
+      success: false as const,
+      error:
+        parsed.error.issues[0]?.message ??
+        "Confira os dados para iniciar o tour.",
+    };
   const h = await headers();
   // Vercel supplies this header; locally use one shared bucket instead of trusting arbitrary forwarding headers.
   const address = process.env.VERCEL
@@ -20,7 +29,7 @@ export async function beginVisitAction(input: unknown) {
     .update(`${new Date().toISOString().slice(0, 10)}:${address}`)
     .digest("hex");
   try {
-    const visit = await beginVisit(input, abuseKey);
+    const visit = await beginVisit(parsed.data, abuseKey);
     const tour = await identifiedTour(hashToken(visit.token));
     if (!tour) throw new Error("TourUnavailable");
     return { success: true as const, ...visit, tour };
